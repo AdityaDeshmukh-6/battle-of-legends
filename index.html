@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CLASH DRAFT SHOWDOWN // 3D ARENA</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Aesthetic Modern Typography: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti for Victory Fanfare -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #06080e;
+      --accent-blue: #38bdf8;
+      --accent-red: #f43f5e;
+      --card-radius: 26px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-base);
+      color: #f1f5f9;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      min-height: 100vh;
+      transition: background 0.7s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.7s ease;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.8) 0%, transparent 70%);
+    }
+
+    .font-outfit {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body.team-blue-turn {
+      background-color: #040714 !important;
+      background-image: 
+        radial-gradient(ellipse 70% 50% at 50% -5%, rgba(37, 99, 235, 0.35) 0%, transparent 70%),
+        radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.95) 0%, transparent 70%) !important;
+      box-shadow: inset 0 0 140px rgba(14, 165, 233, 0.22);
+    }
+
+    body.team-red-turn {
+      background-color: #120407 !important;
+      background-image: 
+        radial-gradient(ellipse 70% 50% at 50% -5%, rgba(225, 29, 72, 0.35) 0%, transparent 70%),
+        radial-gradient(circle at 50% 100%, rgba(24, 7, 12, 0.95) 0%, transparent 70%) !important;
+      box-shadow: inset 0 0 140px rgba(244, 63, 94, 0.22);
+    }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-subtle {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .showcase-stage {
+      perspective: 1400px;
+      perspective-origin: 50% 40%;
+    }
+
+    .cards-trio-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      transform-style: preserve-3d;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .studio-card-wrapper {
+      width: 250px;
+      height: 360px;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
+                  filter 0.4s ease, 
+                  opacity 0.4s ease,
+                  box-shadow 0.4s ease;
+      position: relative;
+      border-radius: var(--card-radius);
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .studio-card-wrapper {
+        width: 220px;
+        height: 320px;
+      }
+      .cards-trio-grid {
+        gap: 12px;
+      }
+    }
+
+    .studio-card-frame {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--card-radius);
+      padding: 7px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.85),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.6);
+      transition: all 0.35s ease;
+    }
+
+    .studio-card-frame::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--card-radius);
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.6) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .studio-card-wrapper.is-focused {
+      transform: translateY(-8px) scale(1.04) translateZ(30px);
+      filter: brightness(1.06);
+      z-index: 20;
+    }
+
+    .studio-card-wrapper.is-focused .studio-card-frame {
+      box-shadow: 
+        0 30px 60px -10px rgba(0, 0, 0, 0.95),
+        0 0 45px rgba(56, 189, 248, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.6);
+    }
+
+    body.team-red-turn .studio-card-wrapper.is-focused .studio-card-frame {
+      box-shadow: 
+        0 30px 60px -10px rgba(0, 0, 0, 0.95),
+        0 0 45px rgba(244, 63, 94, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.6);
+    }
+
+    .studio-card-wrapper:not(.is-focused) {
+      filter: brightness(0.68) saturate(0.85);
+      opacity: 0.82;
+    }
+    .studio-card-wrapper:not(.is-focused):hover {
+      filter: brightness(0.9) saturate(1);
+      opacity: 0.96;
+      transform: translateY(-3px) scale(0.99);
+    }
+
+    .floating-pill-badge {
+      background: rgba(10, 15, 28, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      padding: 8px 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .btn-aesthetic-primary {
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      color: #030712;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-aesthetic-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px -5px rgba(56, 189, 248, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+    .btn-aesthetic-primary:active {
+      transform: translateY(1px);
+    }
+
+    .duel-card {
+      position: relative;
+      border-radius: 24px;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .duel-card-blue {
+      background: linear-gradient(145deg, rgba(14, 165, 233, 0.16) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1.5px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .duel-card-red {
+      background: linear-gradient(145deg, rgba(244, 63, 94, 0.16) 0%, rgba(24, 7, 12, 0.85) 100%);
+      border: 1.5px solid rgba(244, 63, 94, 0.3);
+    }
+
+    /* Glorious Golden Winner Border Animation with Glow */
+    @keyframes goldenBorderGlow {
+      0% {
+        box-shadow: 0 0 15px rgba(250, 204, 21, 0.3), inset 0 0 10px rgba(250, 204, 21, 0.2);
+        border-color: rgba(250, 204, 21, 0.5);
+      }
+      50% {
+        box-shadow: 0 0 45px rgba(250, 204, 21, 0.95), 0 0 80px rgba(234, 179, 8, 0.6), inset 0 0 25px rgba(250, 204, 21, 0.4);
+        border-color: #fde047;
+        transform: scale(1.035);
+      }
+      100% {
+        box-shadow: 0 0 30px rgba(250, 204, 21, 0.8), inset 0 0 15px rgba(250, 204, 21, 0.3);
+        border-color: #facc15;
+        transform: scale(1.02);
+      }
+    }
+
+    .winner-gold-border {
+      animation: goldenBorderGlow 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+      border-width: 2.5px !important;
+      z-index: 30;
+    }
+
+    @keyframes kingDance {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg) scale(1);
+      }
+      25% {
+        transform: translateY(-16px) rotate(-8deg) scale(1.08);
+      }
+      50% {
+        transform: translateY(0px) rotate(4deg) scale(1);
+      }
+      75% {
+        transform: translateY(-20px) rotate(8deg) scale(1.1);
+      }
+    }
+
+    .animate-king-dance {
+      animation: kingDance 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+    }
+
+    /* Category Tiles */
+    .cat-tile {
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cat-tile:hover {
+      background: rgba(30, 41, 59, 0.6);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
+    }
+    .cat-tile.active {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.18) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between selection:bg-sky-500 selection:text-black">
+
+  <header class="w-full max-w-5xl mx-auto px-4 pt-3.5 z-40 relative flex items-center justify-between">
+    <!-- Brand Badge -->
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-xs font-outfit font-black text-black shadow-lg shadow-sky-500/20">
+        DA
+      </div>
+      <div class="flex flex-col">
+        <span class="font-outfit font-extrabold text-xs tracking-widest text-slate-200">DRAFT ARENA</span>
+        <span class="text-[10px] text-slate-500 font-medium tracking-wider uppercase">Versus Showcase</span>
+      </div>
+    </div>
+
+    <!-- Center Turn Indicator -->
+    <div id="hudCenterStatus" class="hidden items-center gap-2.5 px-4 py-1.5 rounded-full glass-panel border border-white/10 shadow-xl">
+      <div class="w-2 h-2 rounded-full bg-sky-400 animate-ping" id="hudTurnPulse"></div>
+      <span class="font-outfit font-semibold text-xs tracking-wide text-slate-200" id="hudTurnName">Blue Turn</span>
+    </div>
+
+    <!-- Right Controls: Audio & 3-Dot Menu -->
+    <div class="flex items-center gap-2">
+      <button id="btnToggleAudio" class="w-9 h-9 rounded-xl glass-panel text-slate-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer" title="Toggle Sound">
+        <i class="fa-solid fa-volume-high" id="hudAudioIcon"></i>
+      </button>
+      
+      <div class="relative">
+        <button id="btnThreeDots" class="w-9 h-9 rounded-xl glass-panel text-slate-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer">
+          <i class="fa-solid fa-ellipsis-vertical"></i>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="threeDotMenu" class="hidden absolute right-0 mt-2 w-44 glass-panel rounded-2xl p-1.5 shadow-2xl z-50 flex flex-col gap-1 border border-white/10">
+          <button id="menuBtnRules" class="w-full px-3 py-2 rounded-xl text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-circle-info text-sky-400 w-4"></i> Rules
+          </button>
+          <div class="h-px bg-white/5 my-0.5"></div>
+          <button id="menuBtnReset" class="w-full px-3 py-2 rounded-xl text-left text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-rotate-left w-4"></i> Reset Game
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-2.5 flex flex-col justify-center items-center relative z-10">
+
+    <!-- 1. LOBBY SCREEN -->
+    <section id="screenLobby" class="w-full flex flex-col items-center justify-center py-2">
+      
+      <!-- Team Podium -->
+      <div class="w-full max-w-xl flex items-center justify-between px-2 mb-6">
+        
+        <!-- Team 1 (Blue) -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-sky-500/20 via-blue-600/30 to-indigo-600/20 border border-sky-400/40 flex items-center justify-center shadow-lg shadow-sky-500/10 relative">
+            <i class="fa-solid fa-crown text-3xl text-sky-400"></i>
+            <span class="absolute -bottom-2 px-2 py-0.5 rounded-full bg-sky-500/20 border border-sky-400/30 text-[9px] font-outfit font-bold tracking-wider text-sky-300 uppercase">
+              TEAM 01
+            </span>
+          </div>
+          <input type="text" id="team1NameInput" value="Blue King" maxlength="14" class="w-28 text-center bg-transparent border-b border-sky-400/40 hover:border-sky-400 focus:border-sky-400 text-sm font-outfit font-semibold text-slate-100 focus:outline-none py-0.5 transition">
+        </div>
+
+        <!-- Center VS Emote -->
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full glass-panel border border-white/10 flex items-center justify-center font-outfit font-extrabold text-xs text-slate-400 shadow-md">
+            VS
+          </div>
+          <span class="text-[10px] font-outfit text-slate-500 font-semibold tracking-widest mt-1.5 uppercase">10 CARDS</span>
+        </div>
+
+        <!-- Team 2 (Red) -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-rose-500/20 via-red-600/30 to-rose-700/20 border border-rose-400/40 flex items-center justify-center shadow-lg shadow-rose-500/10 relative">
+            <i class="fa-solid fa-shield-halved text-3xl text-rose-400"></i>
+            <span class="absolute -bottom-2 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/30 text-[9px] font-outfit font-bold tracking-wider text-rose-300 uppercase">
+              TEAM 02
+            </span>
+          </div>
+          <input type="text" id="team2NameInput" value="Red King" maxlength="14" class="w-28 text-center bg-transparent border-b border-rose-400/40 hover:border-rose-400 focus:border-rose-400 text-sm font-outfit font-semibold text-slate-100 focus:outline-none py-0.5 transition">
+        </div>
+
+      </div>
+
+      <!-- Category Selector Deck -->
+      <div class="w-full max-w-2xl glass-panel rounded-3xl p-4 sm:p-5 mb-5 border border-white/10 shadow-2xl relative">
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div>
+            <h3 class="font-outfit font-bold text-sm tracking-wide text-slate-100">SELECT BATTLE CATEGORY</h3>
+            <p class="text-[11px] text-slate-400 font-normal">Choose one domain to draft from 30+ curated legends</p>
+          </div>
+          <span class="text-[10px] font-outfit font-semibold text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-full border border-sky-400/20">
+            10 THEMES
+          </span>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5" id="categoryTilesGrid"></div>
+      </div>
+
+      <!-- Start Action -->
+      <button id="btnStartGame" class="w-full max-w-sm py-3.5 rounded-2xl btn-aesthetic-primary font-outfit text-sm tracking-wide flex items-center justify-center gap-2 cursor-pointer transition">
+        <span>ENTER THE ARENA</span>
+        <i class="fa-solid fa-arrow-right text-xs"></i>
+      </button>
+
+    </section>
+
+    <section id="screenCoinToss" class="hidden flex-col items-center justify-center py-8 px-4 w-full max-w-md">
+      <div class="w-full glass-panel rounded-3xl p-6 text-center border border-white/10 shadow-2xl">
+        <div class="text-[11px] font-outfit text-sky-400 tracking-widest uppercase font-semibold mb-1">DETERMINING INITIATIVE</div>
+        <h3 class="text-xl font-outfit font-bold text-slate-100 mb-6">ROYAL FIRST PICK</h3>
+
+        <div class="relative w-32 h-32 mx-auto my-3 flex items-center justify-center">
+          <div id="coinGraphic" class="w-24 h-24 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-400 to-rose-400 border border-white/40 shadow-2xl shadow-sky-500/20 flex items-center justify-center text-4xl text-black font-black transition-all duration-700">
+            <i class="fa-solid fa-crown text-slate-900"></i>
+          </div>
+        </div>
+
+        <div id="coinResultBanner" class="text-sm font-outfit text-slate-300 min-h-[28px] my-4">
+          Tossing coin...
+        </div>
+
+        <button id="btnProceedToDraft" class="hidden w-full py-3 rounded-xl btn-aesthetic-primary font-outfit text-xs font-semibold cursor-pointer">
+          START DRAFTING <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+    </section>
+
+    <section id="screenArena" class="hidden flex-col gap-4 w-full pb-3">
+
+      <!-- Top Ribbon -->
+      <div class="w-full flex items-center justify-between glass-panel rounded-2xl px-4 py-2.5 shadow-lg border border-white/10">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg text-sky-400" id="arenaCatIconBox">
+            <i class="fa-solid fa-masks-theater"></i>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-400 font-outfit font-semibold uppercase tracking-wider" id="arenaCatName">ACTORS</div>
+            <div class="text-xs font-outfit font-bold text-slate-200">
+              Pick <span id="draftRoundCount" class="text-sky-400">1</span> of 10
+            </div>
+          </div>
+        </div>
+
+        <!-- POV Deck Tabs -->
+        <div class="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/5">
+          <button id="btnTabTeam1" class="px-3 py-1 rounded-lg text-xs font-outfit font-semibold bg-sky-500/20 text-sky-300 border border-sky-400/30 transition cursor-pointer">
+            <span id="tabTeam1Name">Blue King</span> (<span id="tabTeam1Count">0/10</span>)
+          </button>
+          <button id="btnTabTeam2" class="px-3 py-1 rounded-lg text-xs font-outfit font-semibold text-slate-400 hover:text-white transition cursor-pointer">
+            <span id="tabTeam2Name">Red King</span> (<span id="tabTeam2Count">0/10</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Spacious 3D Card Showcase -->
+      <div class="w-full showcase-stage relative my-1">
+        
+        <div class="text-center mb-3">
+          <h3 id="draftInstructionText" class="text-base sm:text-lg font-outfit font-bold text-slate-100">
+            <span id="draftActivePlayerName" class="text-sky-400">Blue King</span>'s Turn
+          </h3>
+          <p class="text-[11px] text-slate-400">Select your favorite card below to lock into your roster</p>
+        </div>
+
+        <!-- 3-Cards Stage -->
+        <div class="w-full flex items-center justify-center min-h-[380px] relative px-2">
+          
+          <button id="btnCarouselPrev" class="hidden sm:flex w-10 h-10 rounded-full glass-panel border border-white/10 text-slate-300 hover:text-white items-center justify-center text-sm absolute left-2 z-30 transition cursor-pointer">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+
+          <div id="cardsTrioContainer" class="cards-trio-grid w-full max-w-3xl"></div>
+
+          <button id="btnCarouselNext" class="hidden sm:flex w-10 h-10 rounded-full glass-panel border border-white/10 text-slate-300 hover:text-white items-center justify-center text-sm absolute right-2 z-30 transition cursor-pointer">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+
+        </div>
+
+        <!-- Center Draft Button -->
+        <div class="flex items-center justify-center mt-3">
+          <button id="btnDraftFocusedCard" class="px-8 py-3 rounded-xl btn-aesthetic-primary font-outfit text-xs font-bold tracking-wider flex items-center gap-2 cursor-pointer shadow-xl">
+            <i class="fa-solid fa-check text-xs"></i> DRAFT SELECTED CARD
+          </button>
+        </div>
+
+      </div>
+
+      <!-- 10-Slot Deck Tray -->
+      <div id="deckTrayBoard" class="w-full glass-panel rounded-2xl p-3 border border-white/10 shadow-2xl mt-1">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-slate-400 text-xs"></i>
+            <span id="deckOwnerTitle" class="font-outfit font-bold text-xs text-slate-200">Blue King's Lineup</span>
+          </div>
+          <span class="text-[10px] font-outfit font-semibold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+            <span id="deckOwnerCount">0</span> / 10 CARDS
+          </span>
+        </div>
+
+        <div id="deckSlotsGrid" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2"></div>
+      </div>
+
+    </section>
+
+    <section id="screenJudgment" class="hidden flex-col items-center justify-center py-4 px-2 w-full max-w-3xl">
+      
+      <!-- STAGE A: THE 5-ROUND LIVE BOUT (LASTS 6+ SECONDS PER ROUND) -->
+      <div id="liveBoutArenaBox" class="w-full flex flex-col items-center">
+        
+        <!-- Top Showdown Header -->
+        <div class="w-full glass-panel rounded-2xl p-3.5 mb-3 flex items-center justify-between border border-white/10 shadow-2xl">
+          <div class="flex items-center gap-2.5">
+            <div id="roundMetricIconPill" class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400 text-base shadow">
+              <i class="fa-solid fa-fire"></i>
+            </div>
+            <div>
+              <span id="boutRoundIndexTag" class="text-[10px] font-outfit font-bold tracking-widest text-sky-400 uppercase block">
+                ROUND 1 OF 5
+              </span>
+              <h3 id="boutRoundTitle" class="text-sm font-outfit font-extrabold text-slate-100 tracking-wide">
+                GLOBAL POPULARITY & FAME
+              </h3>
+            </div>
+          </div>
+
+          <!-- Running Match Scoreboard -->
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 shadow">
+            <span class="text-[11px] font-outfit font-bold text-sky-400" id="liveScoreBlueName">BLUE</span>
+            <span class="text-sm font-outfit font-black text-white px-2 py-0.5 rounded bg-white/10" id="liveScoreTicker">0 - 0</span>
+            <span class="text-[11px] font-outfit font-bold text-rose-400" id="liveScoreRedName">RED</span>
+          </div>
+        </div>
+
+        <!-- 6-Second Round Timer Bar -->
+        <div class="w-full bg-black/60 rounded-full h-1.5 mb-4 overflow-hidden border border-white/10">
+          <div id="roundProgressBar" class="bg-gradient-to-r from-sky-400 via-amber-400 to-rose-400 h-full w-0 transition-all duration-300"></div>
+        </div>
+
+        <!-- Dual 3D Comparison Boxes (Pop up Left & Right) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-3">
+          
+          <!-- BLUE TEAM COMPARISON BOX -->
+          <div id="boxBlueDuel" class="duel-card duel-card-blue p-5 flex flex-col justify-between min-h-[220px] shadow-2xl">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded-full bg-sky-500/20 border border-sky-400/40 text-[10px] font-outfit font-extrabold text-sky-300 uppercase tracking-wider" id="duelBlueTeamNameTag">
+                  BLUE KING
+                </span>
+                <span id="duelBlueWinnerCrown" class="hidden text-amber-300 text-sm font-outfit font-bold animate-bounce">
+                  👑 ROUND WINNER (+1)
+                </span>
+              </div>
+
+              <!-- 3D Stat Animation / Number Count-Up -->
+              <div class="flex items-center gap-3 my-2">
+                <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-xl text-sky-400 shadow-inner" id="duelBlueIcon">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-outfit font-medium text-slate-400 uppercase tracking-wider" id="duelBlueMetricLabel">ESTIMATED GLOBAL REACH</div>
+                  <div class="text-2xl sm:text-3xl font-outfit font-black text-slate-100 tracking-tight" id="duelBlueMetricValue">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Team Rationale Brief -->
+            <div class="mt-3 pt-3 border-t border-sky-400/20 text-xs text-slate-300 font-normal leading-relaxed" id="duelBlueExplanation">
+              Loading lineup evaluation...
+            </div>
+          </div>
+
+          <!-- RED TEAM COMPARISON BOX -->
+          <div id="boxRedDuel" class="duel-card duel-card-red p-5 flex flex-col justify-between min-h-[220px] shadow-2xl">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-[10px] font-outfit font-extrabold text-rose-300 uppercase tracking-wider" id="duelRedTeamNameTag">
+                  RED KING
+                </span>
+                <span id="duelRedWinnerCrown" class="hidden text-amber-300 text-sm font-outfit font-bold animate-bounce">
+                  👑 ROUND WINNER (+1)
+                </span>
+              </div>
+
+              <!-- 3D Stat Animation / Number Count-Up -->
+              <div class="flex items-center gap-3 my-2">
+                <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-400/30 flex items-center justify-center text-xl text-rose-400 shadow-inner" id="duelRedIcon">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-outfit font-medium text-slate-400 uppercase tracking-wider" id="duelRedMetricLabel">ESTIMATED GLOBAL REACH</div>
+                  <div class="text-2xl sm:text-3xl font-outfit font-black text-slate-100 tracking-tight" id="duelRedMetricValue">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Team Rationale Brief -->
+            <div class="mt-3 pt-3 border-t border-rose-400/20 text-xs text-slate-300 font-normal leading-relaxed" id="duelRedExplanation">
+              Loading lineup evaluation...
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Live Status Subtext -->
+        <div class="text-center text-xs font-outfit text-slate-400 min-h-[20px] mt-1" id="duelLiveStatusText">
+          Analyzing rosters for Round 1...
+        </div>
+
+      </div>
+
+      <!-- STAGE B: GRAND FINALE WITH CELEBRATING DANCING KING -->
+      <div id="grandRevealBox" class="hidden flex-col items-center w-full">
+        
+        <!-- Champion Trophy Card with Animated Dancing Mascot -->
+        <div id="winnerCard" class="w-full glass-panel rounded-3xl p-6 text-center mb-4 border border-white/15 shadow-2xl relative overflow-hidden">
+          
+          <!-- Animated Dancing Mascot -->
+          <div class="w-24 h-24 mx-auto mb-3 flex items-center justify-center animate-king-dance">
+            <svg width="84" height="84" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="45" fill="url(#danceGradient)" stroke="#facc15" stroke-width="3"/>
+              <!-- Crown -->
+              <path d="M26 38L34 22L50 32L66 22L74 38L68 50H32L26 38Z" fill="#FACC15" stroke="#CA8A04" stroke-width="2"/>
+              <circle cx="34" cy="22" r="3" fill="#EF4444"/>
+              <circle cx="50" cy="32" r="3" fill="#3B82F6"/>
+              <circle cx="66" cy="22" r="3" fill="#10B981"/>
+              <!-- Cheerful Face -->
+              <circle cx="40" cy="62" r="4" fill="#0F172A"/>
+              <circle cx="60" cy="62" r="4" fill="#0F172A"/>
+              <path d="M38 72C42 80 58 80 62 72" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="danceGradient" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#38BDF8"/>
+                  <stop offset="1" stop-color="#3B82F6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <span class="text-[10px] uppercase tracking-widest text-amber-400 font-outfit font-extrabold mb-1 block">
+            ROYAL CHAMPION
+          </span>
+          <div id="winnerNameText" class="text-3xl sm:text-4xl font-outfit font-black text-slate-100 tracking-wide">
+            BLUE KING
+          </div>
+          
+          <div class="mt-2.5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/20 text-amber-300 font-outfit text-sm font-black border border-amber-400/40 shadow">
+            MATCH VERDICT: <span id="finalScorePill" class="text-white">3 - 2</span>
+          </div>
+          
+          <p id="winnerSummaryShort" class="text-xs text-slate-300 font-normal mt-3 max-w-md mx-auto leading-relaxed"></p>
+        </div>
+
+        <!-- 5-Bout Summary Tally -->
+        <div class="w-full mb-4">
+          <div class="flex items-center justify-between mb-2 px-1">
+            <h4 class="text-xs font-outfit font-bold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-list-check text-sky-400"></i> Match Scorecard
+            </h4>
+            <span class="text-[10px] font-outfit text-slate-500 uppercase">5 Rounds Complete</span>
+          </div>
+          <div id="battleRoundsContainer" class="space-y-1.5"></div>
+        </div>
+
+        <!-- Action Rematch Buttons -->
+        <div class="flex gap-2.5 w-full">
+          <button id="btnPlayAgainSameCategory" class="flex-1 py-3.5 rounded-xl glass-panel text-slate-200 hover:text-white font-outfit text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition border border-white/10">
+            <i class="fa-solid fa-rotate-left"></i> REMATCH
+          </button>
+          <button id="btnPlayNewCategory" class="flex-1 py-3.5 rounded-xl btn-aesthetic-primary font-outfit text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-compass"></i> CHANGE THEME
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <div id="modalRules" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-sm glass-panel rounded-3xl p-5 shadow-2xl relative text-left border border-white/10">
+      <button id="btnCloseRules" class="absolute top-4 right-4 text-slate-400 hover:text-white text-base cursor-pointer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="text-sm font-outfit font-bold text-slate-100 mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-circle-question text-sky-400"></i> PASS & PLAY RULES
+      </h3>
+      <div class="space-y-2 text-xs text-slate-300">
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+          <strong class="text-sky-300 block mb-0.5 font-outfit">1. Pure Taste • No Number Chasing</strong>
+          Pick the stars, movies, cars, or food that you personally love.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+          <strong class="text-indigo-300 block mb-0.5 font-outfit">2. 3 Random Choices Per Turn</strong>
+          Choose 1 of the 3 cards to lock into your 10-card deck, then hand the phone to your brother.
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+          <strong class="text-emerald-300 block mb-0.5 font-outfit">3. 5-Round Suspense Duel</strong>
+          Watch the 5 bouts deliberate for 6+ seconds each with real stats and golden spotlights! First to 3 points takes the crown!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastNotification" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
+    <div class="px-4 py-2 rounded-full glass-panel border border-white/15 text-slate-200 font-outfit text-xs font-semibold shadow-2xl flex items-center gap-2">
+      <span id="toastIcon">✨</span>
+      <span id="toastMessage">Welcome to Draft Arena</span>
+    </div>
+  </div>
+
+  <script>
+    class AestheticAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTap() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const now = this.ctx.currentTime;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.04);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        } catch(e) {}
+      }
+
+      playCardFocus() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const now = this.ctx.currentTime;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(640, now + 0.08);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } catch(e) {}
+      }
+
+      playDraftLock() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          
+          osc1.type = 'sine';
+          osc2.type = 'triangle';
+          
+          osc1.frequency.setValueAtTime(140, now);
+          osc1.frequency.exponentialRampToValueAtTime(60, now + 0.18);
+          
+          osc2.frequency.setValueAtTime(587.33, now);
+          osc2.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 0.18);
+          osc2.stop(now + 0.18);
+        } catch(e) {}
+      }
+
+      /* Authentic Metallic Crystal Ting-Ting Winning Chime */
+      playTingTing() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const now = this.ctx.currentTime;
+          [1760, 2093].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const t = now + (idx * 0.09);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.25, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.45);
+          });
+        } catch(e) {}
+      }
+
+      playVictoryChime() {
+        if (this.muted) return;
+        try {
+          this.init();
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const t = this.ctx.currentTime + (idx * 0.08);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.12, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.35);
+          });
+        } catch(e) {}
+      }
+    }
+    const audio = new AestheticAudioEngine();
+
+    const CATEGORIES = {
+      actors: {
+        id: 'actors',
+        name: 'ACTORS',
+        icon: 'fa-masks-theater',
+        items: [
+          "Leonardo DiCaprio", "The Rock (Dwayne Johnson)", "Tom Cruise", "Robert Downey Jr", "Johnny Depp",
+          "Brad Pitt", "Christian Bale", "Keanu Reeves", "Will Smith", "Nicolas Cage",
+          "Arnold Schwarzenegger", "Jackie Chan", "Bruce Lee", "Sylvester Stallone", "Chris Hemsworth",
+          "Chris Evans", "Ryan Reynolds", "Cillian Murphy", "Henry Cavill", "Robert Pattinson",
+          "Kevin Hart", "Ryan Gosling", "Vin Diesel", "Bradley Cooper", "Kit Harington",
+          "Michael B. Jordan", "Chris Pratt", "Tom Holland", "Tom Hiddleston", "Denzel Washington",
+          "Heath Ledger", "Al Pacino"
+        ]
+      },
+      actresses: {
+        id: 'actresses',
+        name: 'ACTRESSES',
+        icon: 'fa-gem',
+        items: [
+          "Sydney Sweeney", "Megan Fox", "Madison Beer", "Gal Gadot", "Scarlett Johansson",
+          "Elizabeth Olsen", "Emma Watson", "Margot Robbie", "Kendall Jenner", "Katy Perry",
+          "Kylie Jenner", "Kim Kardashian", "Alexandra Daddario", "Ana de Armas", "Emily Blunt",
+          "Kristen Stewart", "Ariana Grande", "Selena Gomez", "Natalie Portman", "Jennifer Aniston",
+          "Jennifer Lawrence", "Bella Hadid", "Dua Lipa", "Rihanna", "Aishwarya Rai",
+          "Zendaya", "Billie Eilish", "Camila Cabello", "Nicki Minaj", "Jessica Alba",
+          "Kat Dennings", "Anne Hathaway"
+        ]
+      },
+      cars: {
+        id: 'cars',
+        name: 'CARS',
+        icon: 'fa-car-side',
+        items: [
+          "McLaren P1", "LaFerrari", "Chevrolet Corvette", "Porsche 911 GT3", "Rolls-Royce Ghost",
+          "Nissan GT-R", "Toyota Supra", "Audi R8", "Tesla Cybertruck", "McLaren F1",
+          "Bugatti Chiron Super Sport", "Koenigsegg Agera", "Ferrari SF90 Spider", "Pagani Zonda", "Lamborghini Veneno",
+          "Mercedes-Maybach S-Class", "BMW M5 Competition", "Rolls-Royce Phantom", "Toyota Land Cruiser", "Aston Martin Valkyrie",
+          "Ford Mustang", "Lotus Emira", "Maserati GranTurismo", "BMW M3", "Audi RS3",
+          "McLaren 750S", "Lamborghini Revuelto", "BMW Z4", "Jaguar F-Type", "Nissan Z",
+          "Ferrari F80", "Pagani Utopia", "Bentley Continental GT", "Rolls-Royce Spectre", "Cadillac Celestiq", "Honda Civic"
+        ]
+      },
+      cricketers: {
+        id: 'cricketers',
+        name: 'CRICKETERS',
+        icon: 'fa-baseball-bat-ball',
+        items: [
+          "Sachin Tendulkar", "Lasith Malinga", "Muttiah Muralitharan", "Kapil Dev", "Brian Lara",
+          "Yuvraj Singh", "Virat Kohli", "Jasprit Bumrah", "Jonty Rhodes", "Bhuvneshwar Kumar",
+          "Don Bradman", "Vivian Richards", "Jacques Kallis", "MS Dhoni", "Ricky Ponting",
+          "Shane Warne", "AB de Villiers", "Dale Steyn", "Brett Lee", "Chris Gayle",
+          "Wasim Akram", "Rahul Dravid", "Rohit Sharma", "Glenn McGrath", "Curtly Ambrose"
+        ]
+      },
+      food: {
+        id: 'food',
+        name: 'FOOD',
+        icon: 'fa-utensils',
+        items: [
+          "Chicken Biryani", "Pizza", "Pasta", "Noodles", "Chicken Lollipop",
+          "Burger", "Hot Dog", "Sushi", "Spring Rolls", "Kebab",
+          "Chicken Tikka Masala", "Chicken Tandoori", "Roasted Chicken", "Fried Chicken", "Ice Cream",
+          "Cake", "Milkshake", "Smoothie", "Chocolate", "Ramen",
+          "Spaghetti", "Meatballs", "Egg Roll", "Egg Omelette", "Boiled Egg",
+          "Samosa", "Kachori", "Bread Pakora", "Bhaji", "Lassi",
+          "Tea", "Coffee", "French Fries", "Fish and Chips", "Chicken Nuggets",
+          "Chicken Wraps", "Maggi", "Steak", "Falooda", "Dosa",
+          "Idli", "Uttapam", "Misal Pav", "Vada Pav", "Medu Vada",
+          "Poha", "Aloo Paratha", "Paneer Butter Masala", "Butter Chicken", "Naan",
+          "Chicken Chilli", "Pav Bhaji", "Chole Bhature", "Momos", "Croissant", "Nachos"
+        ]
+      },
+      songs: {
+        id: 'songs',
+        name: 'SONGS',
+        icon: 'fa-music',
+        items: [
+          "Blinding Lights", "Shape of You", "Starboy", "Sunflower", "One Dance",
+          "Stay", "Believer", "Heat Waves", "God's Plan", "Despacito",
+          "Closer", "Dance Monkey", "Rockstar", "Goosebumps", "FE!N",
+          "Watermelon Sugar", "Counting Stars", "Uptown Funk", "Waka Waka", "Skyfall",
+          "No Lie", "Faded", "Levitating", "Havana", "Baby",
+          "Sugar", "Bad Guy", "Billie Jean", "HUMBLE.", "Lonely",
+          "Bohemian Rhapsody", "Smells Like Teen Spirit"
+        ]
+      },
+      influential_people: {
+        id: 'influential_people',
+        name: 'INFLUENTIAL PEOPLE',
+        icon: 'fa-landmark',
+        items: [
+          "Michael Jackson", "Jackie Chan", "Bruce Lee", "Johnny Depp", "Robert Downey Jr",
+          "Princess Diana", "Queen Elizabeth II", "Elvis Presley", "Alexander the Great", "Chhatrapati Shivaji Maharaj",
+          "Maharana Pratap", "Chhatrapati Sambhaji Maharaj", "Abraham Lincoln", "George Washington", "Donald Trump",
+          "Cristiano Ronaldo", "Michael Jordan", "William Shakespeare", "Albert Einstein", "Isaac Newton",
+          "Nikola Tesla", "Leonardo da Vinci", "Plato", "Steve Jobs", "Elon Musk",
+          "Mahatma Gandhi", "Taylor Swift", "Vladimir Putin", "Oppenheimer"
+        ]
+      },
+      movies: {
+        id: 'movies',
+        name: 'MOVIES',
+        icon: 'fa-film',
+        items: [
+          "Avengers: Endgame", "Avengers: Infinity War", "Avatar", "The Godfather", "Inception",
+          "Interstellar", "The Dark Knight", "The Lord of the Rings", "Forrest Gump", "Fight Club",
+          "The Matrix", "Dune", "Toy Story", "Titanic", "John Wick",
+          "Kung Fu Panda", "Jurassic Park", "Pirates of the Caribbean", "Spider-Man", "Iron Man"
+        ]
+      },
+      companies: {
+        id: 'companies',
+        name: 'COMPANIES',
+        icon: 'fa-building',
+        items: [
+          "Nvidia", "Apple", "Samsung", "Tesla", "Microsoft",
+          "Alphabet (Google)", "Amazon", "Meta Platforms", "OpenAI", "Netflix",
+          "Ferrari", "Coca-Cola", "McDonald's", "Starbucks", "Toyota",
+          "Disney", "Intel", "Sony", "IBM", "Tata Group"
+        ]
+      },
+      countries_cities: {
+        id: 'countries_cities',
+        name: 'CITIES & COUNTRIES',
+        icon: 'fa-earth-americas',
+        items: [
+          "India", "Russia", "China", "USA", "Israel",
+          "Japan", "United Kingdom", "Germany", "France", "Italy",
+          "Australia", "Spain", "Brazil", "Canada", "Switzerland",
+          "Dubai", "Paris", "Tokyo", "New York City", "London", "Mumbai"
+        ]
+      }
+    };
+
+    const WIKI_PAGE_MAP = {
+      "The Rock (Dwayne Johnson)": "Dwayne Johnson",
+      "Robert Downey Jr": "Robert Downey Jr.",
+      "Leonardo DiCaprio": "Leonardo DiCaprio",
+      "Johnny Depp": "Johnny Depp",
+      "Arnold Schwarzenegger": "Arnold Schwarzenegger",
+      "Sylvester Stallone": "Sylvester Stallone",
+      "Ryan Reynolds": "Ryan Reynolds",
+      "Cillian Murphy": "Cillian Murphy",
+      "Henry Cavill": "Henry Cavill",
+      "Robert Pattinson": "Robert Pattinson",
+      "Kevin Hart": "Kevin Hart",
+      "Ryan Gosling": "Ryan Gosling",
+      "Vin Diesel": "Vin Diesel",
+      "Bradley Cooper": "Bradley Cooper",
+      "Kit Harington": "Kit Harington",
+      "Michael B. Jordan": "Michael B. Jordan",
+      "Chris Pratt": "Chris Pratt",
+      "Tom Holland": "Tom Holland",
+      "Tom Hiddleston": "Tom Hiddleston",
+      "Denzel Washington": "Denzel Washington",
+      "Heath Ledger": "Heath Ledger",
+      "Al Pacino": "Al Pacino",
+      "Jackie Chan": "Jackie Chan",
+      "Bruce Lee": "Bruce Lee",
+      "Tom Cruise": "Tom Cruise",
+      "Brad Pitt": "Brad Pitt",
+      "Christian Bale": "Christian Bale",
+      "Keanu Reeves": "Keanu Reeves",
+      "Will Smith": "Will Smith",
+      "Nicolas Cage": "Nicolas Cage",
+      "Chris Hemsworth": "Chris Hemsworth",
+      "Chris Evans": "Chris Evans (actor)",
+      "Sydney Sweeney": "Sydney Sweeney",
+      "Megan Fox": "Megan Fox",
+      "Madison Beer": "Madison Beer",
+      "Gal Gadot": "Gal Gadot",
+      "Scarlett Johansson": "Scarlett Johansson",
+      "Elizabeth Olsen": "Elizabeth Olsen",
+      "Emma Watson": "Emma Watson",
+      "Margot Robbie": "Margot Robbie",
+      "Kendall Jenner": "Kendall Jenner",
+      "Katy Perry": "Katy Perry",
+      "Kylie Jenner": "Kylie Jenner",
+      "Kim Kardashian": "Kim Kardashian",
+      "Alexandra Daddario": "Alexandra Daddario",
+      "Ana de Armas": "Ana de Armas",
+      "Emily Blunt": "Emily Blunt",
+      "Kristen Stewart": "Kristen Stewart",
+      "Ariana Grande": "Ariana Grande",
+      "Selena Gomez": "Selena Gomez",
+      "Natalie Portman": "Natalie Portman",
+      "Jennifer Aniston": "Jennifer Aniston",
+      "Jennifer Lawrence": "Jennifer Lawrence",
+      "Bella Hadid": "Bella Hadid",
+      "Dua Lipa": "Dua Lipa",
+      "Rihanna": "Rihanna",
+      "Aishwarya Rai": "Aishwarya Rai Bachchan",
+      "Zendaya": "Zendaya",
+      "Billie Eilish": "Billie Eilish",
+      "Camila Cabello": "Camila Cabello",
+      "Nicki Minaj": "Nicki Minaj",
+      "Jessica Alba": "Jessica Alba",
+      "Kat Dennings": "Kat Dennings",
+      "Anne Hathaway": "Anne Hathaway",
+      "McLaren P1": "McLaren P1",
+      "LaFerrari": "Ferrari LaFerrari",
+      "Porsche 911 GT3": "Porsche 911 GT3",
+      "Rolls-Royce Ghost": "Rolls-Royce Ghost",
+      "Nissan GT-R": "Nissan GT-R",
+      "Toyota Supra": "Toyota Supra",
+      "Audi R8": "Audi R8",
+      "Tesla Cybertruck": "Tesla Cybertruck",
+      "McLaren F1": "McLaren F1",
+      "Bugatti Chiron Super Sport": "Bugatti Chiron",
+      "Koenigsegg Agera": "Koenigsegg Agera",
+      "Ferrari SF90 Spider": "Ferrari SF90 Stradale",
+      "Pagani Zonda": "Pagani Zonda",
+      "Lamborghini Veneno": "Lamborghini Veneno",
+      "Mercedes-Maybach S-Class": "Mercedes-Maybach S-Class",
+      "BMW M5 Competition": "BMW M5",
+      "Rolls-Royce Phantom": "Rolls-Royce Phantom VIII",
+      "Toyota Land Cruiser": "Toyota Land Cruiser",
+      "Aston Martin Valkyrie": "Aston Martin Valkyrie",
+      "Ford Mustang": "Ford Mustang",
+      "Lotus Emira": "Lotus Emira",
+      "Maserati GranTurismo": "Maserati GranTurismo",
+      "BMW M3": "BMW M3",
+      "Audi RS3": "Audi RS 3",
+      "McLaren 750S": "McLaren 750S",
+      "Lamborghini Revuelto": "Lamborghini Revuelto",
+      "BMW Z4": "BMW Z4",
+      "Jaguar F-Type": "Jaguar F-Type",
+      "Nissan Z": "Nissan Z (RZ34)",
+      "Ferrari F80": "Ferrari F80",
+      "Pagani Utopia": "Pagani Utopia",
+      "Bentley Continental GT": "Bentley Continental GT",
+      "Rolls-Royce Spectre": "Rolls-Royce Spectre",
+      "Cadillac Celestiq": "Cadillac Celestiq",
+      "Honda Civic": "Honda Civic",
+      "Sachin Tendulkar": "Sachin Tendulkar",
+      "Lasith Malinga": "Lasith Malinga",
+      "Muttiah Muralitharan": "Muttiah Muralitharan",
+      "Kapil Dev": "Kapil Dev",
+      "Brian Lara": "Brian Lara",
+      "Yuvraj Singh": "Yuvraj Singh",
+      "Virat Kohli": "Virat Kohli",
+      "Jasprit Bumrah": "Jasprit Bumrah",
+      "Jonty Rhodes": "Jonty Rhodes",
+      "Bhuvneshwar Kumar": "Bhuvneshwar Kumar",
+      "Don Bradman": "Don Bradman",
+      "Vivian Richards": "Viv Richards",
+      "Jacques Kallis": "Jacques Kallis",
+      "MS Dhoni": "MS Dhoni",
+      "Ricky Ponting": "Ricky Ponting",
+      "Shane Warne": "Shane Warne",
+      "AB de Villiers": "AB de Villiers",
+      "Dale Steyn": "Dale Steyn",
+      "Brett Lee": "Brett Lee",
+      "Chris Gayle": "Chris Gayle",
+      "Wasim Akram": "Wasim Akram",
+      "Rahul Dravid": "Rahul Dravid",
+      "Rohit Sharma": "Rohit Sharma",
+      "Glenn McGrath": "Glenn McGrath",
+      "Michael Jackson": "Michael Jackson",
+      "Princess Diana": "Diana, Princess of Wales",
+      "Queen Elizabeth II": "Elizabeth II",
+      "Elvis Presley": "Elvis Presley",
+      "Alexander the Great": "Alexander the Great",
+      "Chhatrapati Shivaji Maharaj": "Shivaji",
+      "Maharana Pratap": "Maharana Pratap",
+      "Chhatrapati Sambhaji Maharaj": "Sambhaji",
+      "Abraham Lincoln": "Abraham Lincoln",
+      "George Washington": "George Washington",
+      "Donald Trump": "Donald Trump",
+      "Cristiano Ronaldo": "Cristiano Ronaldo",
+      "Michael Jordan": "Michael Jordan",
+      "William Shakespeare": "William Shakespeare",
+      "Albert Einstein": "Albert Einstein",
+      "Isaac Newton": "Isaac Newton",
+      "Nikola Tesla": "Nikola Tesla",
+      "Leonardo da Vinci": "Leonardo da Vinci",
+      "Plato": "Plato",
+      "Steve Jobs": "Steve Jobs",
+      "Elon Musk": "Elon Musk",
+      "Mahatma Gandhi": "Mahatma Gandhi",
+      "Taylor Swift": "Taylor Swift",
+      "Vladimir Putin": "Vladimir Putin",
+      "Oppenheimer": "J. Robert Oppenheimer",
+      "Avengers: Endgame": "Avengers: Endgame",
+      "Avengers: Infinity War": "Avengers: Infinity War",
+      "Avatar": "Avatar (2009 film)",
+      "The Godfather": "The Godfather",
+      "Inception": "Inception",
+      "Interstellar": "Interstellar (film)",
+      "The Dark Knight": "The Dark Knight",
+      "The Lord of the Rings": "The Lord of the Rings (film series)",
+      "Forrest Gump": "Forrest Gump",
+      "Fight Club": "Fight Club",
+      "The Matrix": "The Matrix",
+      "Dune": "Dune (2021 film)",
+      "Toy Story": "Toy Story",
+      "Titanic": "Titanic (1997 film)",
+      "John Wick": "John Wick (film)",
+      "Kung Fu Panda": "Kung Fu Panda (film)",
+      "Nvidia": "Nvidia",
+      "Apple": "Apple Inc.",
+      "Samsung": "Samsung Electronics",
+      "Tesla": "Tesla, Inc.",
+      "Microsoft": "Microsoft",
+      "Alphabet (Google)": "Google",
+      "Amazon": "Amazon (company)",
+      "Meta Platforms": "Meta Platforms",
+      "OpenAI": "OpenAI",
+      "Netflix": "Netflix",
+      "Ferrari": "Ferrari",
+      "Coca-Cola": "The Coca-Cola Company",
+      "McDonald's": "McDonald's",
+      "Starbucks": "Starbucks"
+    };
+
+    const IMAGE_CACHE = {};
+
+    async function fetchElementImage(name) {
+      if (IMAGE_CACHE[name]) return IMAGE_CACHE[name];
+      const wikiTitle = WIKI_PAGE_MAP[name] || name;
+      const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
+      try {
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.thumbnail && data.thumbnail.source) {
+            IMAGE_CACHE[name] = data.thumbnail.source;
+            return data.thumbnail.source;
+          }
+        }
+      } catch (e) {}
+
+      const cleanName = name.replace(/[<>&"]/g, '');
+      const initials = cleanName.split(' ').map(p => p[0]).join('').substring(0, 3).toUpperCase();
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="380" viewBox="0 0 300 380">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0f172a"/>
+            <stop offset="50%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0284c7"/>
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#g)"/>
+        <circle cx="150" cy="180" r="70" fill="#38bdf8" opacity="0.1"/>
+        <text x="150" y="190" font-family="'Outfit', sans-serif" font-size="42" font-weight="800" fill="#f8fafc" text-anchor="middle" dominant-baseline="middle">${initials}</text>
+      </svg>`;
+      const fallback = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      IMAGE_CACHE[name] = fallback;
+      return fallback;
+    }
+
+    const GAME_STATE = {
+      categoryKey: 'actors',
+      activePlayer: 1,
+      viewingTeam: 1,
+      currentDraftChoices: [],
+      focusedCardIndex: 1,
+      team1: { name: 'Blue King', deck: [] },
+      team2: { name: 'Red King', deck: [] },
+      poolAvailable: []
+    };
+
+    const DOM = {};
+
+    function initDOMElements() {
+      const ids = [
+        'screenLobby', 'screenCoinToss', 'screenArena', 'screenJudgment',
+        'hudCenterStatus', 'hudTurnName', 'hudTurnPulse', 'btnToggleAudio', 'hudAudioIcon',
+        'btnThreeDots', 'threeDotMenu', 'menuBtnRules', 'menuBtnReset',
+        'team1NameInput', 'team2NameInput', 'categoryTilesGrid', 'btnStartGame',
+        'coinGraphic', 'coinResultBanner', 'btnProceedToDraft',
+        'arenaCatIconBox', 'arenaCatName', 'draftRoundCount',
+        'btnTabTeam1', 'btnTabTeam2', 'tabTeam1Name', 'tabTeam1Count', 'tabTeam2Name', 'tabTeam2Count',
+        'draftInstructionText', 'draftActivePlayerName', 'cardsTrioContainer',
+        'btnCarouselPrev', 'btnCarouselNext', 'btnDraftFocusedCard',
+        'deckTrayBoard', 'deckOwnerTitle', 'deckOwnerCount', 'deckSlotsGrid',
+        'liveBoutArenaBox', 'roundMetricIconPill', 'boutRoundIndexTag', 'boutRoundTitle',
+        'liveScoreBlueName', 'liveScoreTicker', 'liveScoreRedName', 'roundProgressBar',
+        'boxBlueDuel', 'duelBlueTeamNameTag', 'duelBlueWinnerCrown', 'duelBlueIcon',
+        'duelBlueMetricLabel', 'duelBlueMetricValue', 'duelBlueExplanation',
+        'boxRedDuel', 'duelRedTeamNameTag', 'duelRedWinnerCrown', 'duelRedIcon',
+        'duelRedMetricLabel', 'duelRedMetricValue', 'duelRedExplanation',
+        'duelLiveStatusText',
+        'grandRevealBox', 'winnerCard', 'winnerNameText', 'finalScorePill',
+        'winnerSummaryShort', 'battleRoundsContainer',
+        'btnPlayAgainSameCategory', 'btnPlayNewCategory', 'modalRules', 'btnCloseRules',
+        'toastNotification', 'toastIcon', 'toastMessage'
+      ];
+      ids.forEach(id => {
+        DOM[id] = document.getElementById(id);
+      });
+    }
+
+    function generateNext3DraftChoices() {
+      if (GAME_STATE.poolAvailable.length < 3) {
+        const items = CATEGORIES[GAME_STATE.categoryKey].items;
+        const drafted = new Set([
+          ...GAME_STATE.team1.deck.map(c => c.name),
+          ...GAME_STATE.team2.deck.map(c => c.name)
+        ]);
+        GAME_STATE.poolAvailable = items.filter(it => !drafted.has(it));
+      }
+
+      const shuffled = [...GAME_STATE.poolAvailable].sort(() => 0.5 - Math.random());
+      const chosen3 = shuffled.slice(0, 3);
+      GAME_STATE.currentDraftChoices = chosen3.map(name => ({
+        name,
+        category: CATEGORIES[GAME_STATE.categoryKey].name,
+        imageUrl: null
+      }));
+      GAME_STATE.focusedCardIndex = 1;
+
+      renderSpacious3DCards();
+    }
+
+    function renderSpacious3DCards() {
+      if (!DOM.cardsTrioContainer) return;
+      DOM.cardsTrioContainer.innerHTML = '';
+
+      const isTeam1 = GAME_STATE.activePlayer === 1;
+      const activeTeam = isTeam1 ? GAME_STATE.team1 : GAME_STATE.team2;
+
+      document.body.classList.remove('team-blue-turn', 'team-red-turn');
+      document.body.classList.add(isTeam1 ? 'team-blue-turn' : 'team-red-turn');
+
+      if (DOM.draftActivePlayerName) {
+        DOM.draftActivePlayerName.innerText = activeTeam.name;
+        DOM.draftActivePlayerName.className = isTeam1 ? 'text-sky-400 font-bold' : 'text-rose-400 font-bold';
+      }
+
+      const frameAccents = [
+        'bg-gradient-to-b from-sky-400/80 via-slate-900 to-black',
+        'bg-gradient-to-b from-indigo-400/80 via-slate-900 to-black',
+        'bg-gradient-to-b from-rose-400/80 via-slate-900 to-black'
+      ];
+
+      GAME_STATE.currentDraftChoices.forEach((card, index) => {
+        const isFocused = index === GAME_STATE.focusedCardIndex;
+        const frameGradient = frameAccents[index % frameAccents.length];
+
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = `studio-card-wrapper ${isFocused ? 'is-focused' : ''}`;
+        
+        cardWrapper.innerHTML = `
+          <div class="studio-card-frame ${frameGradient}">
+            
+            <div class="w-full flex-1 rounded-[22px] bg-slate-950 overflow-hidden relative shadow-inner">
+              <img id="card-img-${index}" src="" alt="${card.name}" class="w-full h-full object-cover transition-transform duration-700 hover:scale-105">
+              
+              <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20 pointer-events-none"></div>
+              
+              <div class="absolute bottom-3 left-3 right-3 flex justify-center z-20">
+                <div class="floating-pill-badge text-center max-w-full">
+                  <h4 class="font-outfit font-bold text-xs sm:text-sm text-slate-100 truncate tracking-wide">
+                    ${card.name}
+                  </h4>
+                  <span class="text-[9px] font-outfit text-sky-400 uppercase tracking-widest block font-medium">
+                    ${CATEGORIES[GAME_STATE.categoryKey].name}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        `;
+
+        cardWrapper.onclick = () => {
+          if (GAME_STATE.focusedCardIndex === index) {
+            executeDraftPick(card);
+          } else {
+            setFocusedCardIndex(index);
+          }
+        };
+
+        DOM.cardsTrioContainer.appendChild(cardWrapper);
+
+        fetchElementImage(card.name).then(imgUrl => {
+          card.imageUrl = imgUrl;
+          const imgEl = document.getElementById(`card-img-${index}`);
+          if (imgEl) imgEl.src = imgUrl;
+        });
+      });
+    }
+
+    function setFocusedCardIndex(newIndex) {
+      if (newIndex < 0 || newIndex > 2) return;
+      GAME_STATE.focusedCardIndex = newIndex;
+      audio.playCardFocus();
+
+      const items = DOM.cardsTrioContainer.querySelectorAll('.studio-card-wrapper');
+      items.forEach((item, idx) => {
+        if (idx === newIndex) {
+          item.classList.add('is-focused');
+        } else {
+          item.classList.remove('is-focused');
+        }
+      });
+    }
+
+    function executeDraftPick(chosenCard) {
+      const activeTeam = GAME_STATE.activePlayer === 1 ? GAME_STATE.team1 : GAME_STATE.team2;
+      if (activeTeam.deck.length >= 10) return;
+
+      activeTeam.deck.push(chosenCard);
+      audio.playDraftLock();
+
+      const poolIdx = GAME_STATE.poolAvailable.indexOf(chosenCard.name);
+      if (poolIdx !== -1) {
+        GAME_STATE.poolAvailable.splice(poolIdx, 1);
+      }
+
+      showToast(`${activeTeam.name} drafted ${chosenCard.name}`, "✨");
+
+      if (GAME_STATE.team1.deck.length >= 10 && GAME_STATE.team2.deck.length >= 10) {
+        renderDeckSlots();
+        updateHUD();
+        setTimeout(initiateSuspenseBattleJudgment, 600);
+        return;
+      }
+
+      GAME_STATE.activePlayer = GAME_STATE.activePlayer === 1 ? 2 : 1;
+      GAME_STATE.viewingTeam = GAME_STATE.activePlayer;
+
+      renderDeckSlots();
+      updateHUD();
+      generateNext3DraftChoices();
+
+      const nextTeam = GAME_STATE.activePlayer === 1 ? GAME_STATE.team1 : GAME_STATE.team2;
+      showToast(`Pass device to ${nextTeam.name}`, "📱");
+    }
+
+    function renderDeckSlots() {
+      const isTeam1 = GAME_STATE.viewingTeam === 1;
+      const currentTeam = isTeam1 ? GAME_STATE.team1 : GAME_STATE.team2;
+
+      if (DOM.deckOwnerTitle) {
+        DOM.deckOwnerTitle.innerText = `${currentTeam.name}'s Lineup`;
+      }
+      if (DOM.deckOwnerCount) {
+        DOM.deckOwnerCount.innerText = currentTeam.deck.length;
+      }
+
+      if (!DOM.deckSlotsGrid) return;
+      DOM.deckSlotsGrid.innerHTML = '';
+
+      for (let i = 0; i < 10; i++) {
+        const card = currentTeam.deck[i];
+        const slotEl = document.createElement('div');
+
+        if (card) {
+          slotEl.className = 'rounded-xl border border-white/10 bg-black/50 p-2 flex flex-col justify-between h-[105px] relative overflow-hidden shadow-md';
+          slotEl.innerHTML = `
+            <div class="w-8 h-8 mx-auto rounded-lg bg-slate-900 border border-white/10 overflow-hidden my-1 shadow">
+              <img id="slot-img-${isTeam1 ? '1' : '2'}-${i}" src="${card.imageUrl || ''}" alt="${card.name}" class="w-full h-full object-cover">
+            </div>
+            <div class="text-center z-10">
+              <div class="font-outfit text-[11px] font-semibold text-slate-200 truncate">${card.name}</div>
+            </div>
+          `;
+
+          if (!card.imageUrl) {
+            fetchElementImage(card.name).then(url => {
+              card.imageUrl = url;
+              const img = document.getElementById(`slot-img-${isTeam1 ? '1' : '2'}-${i}`);
+              if (img) img.src = url;
+            });
+          }
+        } else {
+          slotEl.className = 'rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-2 flex flex-col items-center justify-center h-[105px] text-slate-600';
+          slotEl.innerHTML = `
+            <div class="w-6 h-6 rounded-full border border-dashed border-white/10 flex items-center justify-center text-[10px] font-outfit mb-1">
+              ${i + 1}
+            </div>
+            <span class="text-[9px] font-outfit uppercase tracking-wider">Empty</span>
+          `;
+        }
+        DOM.deckSlotsGrid.appendChild(slotEl);
+      }
+    }
+
+    function updateHUD() {
+      const t1 = GAME_STATE.team1;
+      const t2 = GAME_STATE.team2;
+      const isTeam1 = GAME_STATE.activePlayer === 1;
+      const activeTeam = isTeam1 ? t1 : t2;
+
+      if (DOM.draftRoundCount) {
+        const totalPicks = t1.deck.length + t2.deck.length;
+        DOM.draftRoundCount.innerText = `${Math.min(10, Math.floor(totalPicks / 2) + 1)}`;
+      }
+
+      if (DOM.hudTurnName) {
+        DOM.hudTurnName.innerText = `${activeTeam.name}'s Turn`;
+      }
+      if (DOM.hudTurnPulse) {
+        DOM.hudTurnPulse.className = isTeam1 ? 'w-2 h-2 rounded-full bg-sky-400 animate-ping' : 'w-2 h-2 rounded-full bg-rose-400 animate-ping';
+      }
+      if (DOM.hudCenterStatus) {
+        DOM.hudCenterStatus.classList.remove('hidden');
+        DOM.hudCenterStatus.classList.add('flex');
+      }
+
+      document.body.classList.remove('team-blue-turn', 'team-red-turn');
+      document.body.classList.add(isTeam1 ? 'team-blue-turn' : 'team-red-turn');
+
+      if (DOM.tabTeam1Name) DOM.tabTeam1Name.innerText = t1.name;
+      if (DOM.tabTeam2Name) DOM.tabTeam2Name.innerText = t2.name;
+      if (DOM.tabTeam1Count) DOM.tabTeam1Count.innerText = `${t1.deck.length}/10`;
+      if (DOM.tabTeam2Count) DOM.tabTeam2Count.innerText = `${t2.deck.length}/10`;
+
+      if (DOM.btnTabTeam1 && DOM.btnTabTeam2) {
+        if (GAME_STATE.viewingTeam === 1) {
+          DOM.btnTabTeam1.className = "px-3 py-1 rounded-lg text-xs font-outfit font-semibold bg-sky-500/20 text-sky-300 border border-sky-400/30 transition cursor-pointer";
+          DOM.btnTabTeam2.className = "px-3 py-1 rounded-lg text-xs font-outfit font-semibold text-slate-400 hover:text-white transition cursor-pointer";
+        } else {
+          DOM.btnTabTeam2.className = "px-3 py-1 rounded-lg text-xs font-outfit font-semibold bg-rose-500/20 text-rose-300 border border-rose-400/30 transition cursor-pointer";
+          DOM.btnTabTeam1.className = "px-3 py-1 rounded-lg text-xs font-outfit font-semibold text-slate-400 hover:text-white transition cursor-pointer";
+        }
+      }
+    }
+
+    function runCoinToss() {
+      showScreen('screenCoinToss');
+      DOM.btnProceedToDraft.classList.add('hidden');
+      DOM.coinResultBanner.innerText = "Determining who drafts first...";
+
+      let flips = 0;
+      const interval = setInterval(() => {
+        flips++;
+        DOM.coinGraphic.style.transform = `rotateY(${flips * 180}deg) scale(${1 + (flips % 3) * 0.05})`;
+        
+        if (flips >= 12) {
+          clearInterval(interval);
+          const firstPlayer = Math.random() < 0.5 ? 1 : 2;
+          GAME_STATE.activePlayer = firstPlayer;
+          GAME_STATE.viewingTeam = firstPlayer;
+          DOM.coinGraphic.style.transform = 'rotateY(0deg) scale(1)';
+          const winnerName = firstPlayer === 1 ? GAME_STATE.team1.name : GAME_STATE.team2.name;
+          const winnerColor = firstPlayer === 1 ? 'text-sky-400' : 'text-rose-400';
+          DOM.coinResultBanner.innerHTML = `<span class="${winnerColor} font-outfit font-bold">${winnerName}</span> DRAFTS FIRST!`;
+          DOM.btnProceedToDraft.classList.remove('hidden');
+          audio.playTap();
+        }
+      }, 90);
+    }
+
+    function initializeDraftMatch() {
+      const cat = CATEGORIES[GAME_STATE.categoryKey];
+      GAME_STATE.poolAvailable = [...cat.items];
+      GAME_STATE.team1.deck = [];
+      GAME_STATE.team2.deck = [];
+      GAME_STATE.viewingTeam = GAME_STATE.activePlayer;
+
+      if (DOM.arenaCatIconBox) DOM.arenaCatIconBox.innerHTML = `<i class="fa-solid ${cat.icon}"></i>`;
+      if (DOM.arenaCatName) DOM.arenaCatName.innerText = cat.name;
+
+      showScreen('screenArena');
+      if (DOM.hudCenterStatus) {
+        DOM.hudCenterStatus.classList.remove('hidden');
+        DOM.hudCenterStatus.classList.add('flex');
+      }
+      renderDeckSlots();
+      updateHUD();
+      generateNext3DraftChoices();
+      showToast(`${cat.name} Theme Active`, '✨');
+    }
+
+    function initiateSuspenseBattleJudgment() {
+      showScreen('screenJudgment');
+      if (DOM.hudCenterStatus) DOM.hudCenterStatus.classList.add('hidden');
+      if (DOM.liveBoutArenaBox) DOM.liveBoutArenaBox.classList.remove('hidden');
+      if (DOM.grandRevealBox) DOM.grandRevealBox.classList.add('hidden');
+
+      const t1 = GAME_STATE.team1;
+      const t2 = GAME_STATE.team2;
+
+      if (DOM.duelBlueTeamNameTag) DOM.duelBlueTeamNameTag.innerText = t1.name.toUpperCase();
+      if (DOM.duelRedTeamNameTag) DOM.duelRedTeamNameTag.innerText = t2.name.toUpperCase();
+      if (DOM.liveScoreBlueName) DOM.liveScoreBlueName.innerText = t1.name.substring(0, 8).toUpperCase();
+      if (DOM.liveScoreRedName) DOM.liveScoreRedName.innerText = t2.name.substring(0, 8).toUpperCase();
+
+      // Deterministic evaluation seeds
+      const hashStr = (str) => {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+        return Math.abs(h);
+      };
+
+      const scoreTeam = (deck, salt) => {
+        return deck.reduce((acc, card) => acc + (hashStr(card.name + salt) % 100), 0);
+      };
+
+      // CATEGORY-SPECIFIC EVALUATION METRICS ENGINE
+      const CATEGORY_ROUNDS = {
+        food: [
+          {
+            title: "TASTE PROFILE & CRAVE FACTOR",
+            icon: "fa-utensils",
+            metricLabel: "GLOBAL CRAVE INDEX",
+            v1: 75 + (scoreTeam(t1.deck, 'taste') % 24),
+            v2: 75 + (scoreTeam(t2.deck, 'taste') % 24),
+            suffix: " / 100",
+            exp1: `${t1.name} drafted crave-worthy comfort dishes loved worldwide for flavor & spice.`,
+            exp2: `${t2.name} brought rich, addictive flavors that satisfy midnight cravings.`
+          },
+          {
+            title: "STREET CULTURE & VIRAL DEMAND",
+            icon: "fa-fire",
+            metricLabel: "STREET CART & FOOD TRUCK POPULARITY",
+            v1: 120 + (scoreTeam(t1.deck, 'street') % 180),
+            v2: 120 + (scoreTeam(t2.deck, 'street') % 180),
+            suffix: "M ORDERS / YR",
+            exp1: `Massive daily demand across bustling street corners, bazaars, and night markets.`,
+            exp2: `Unstoppable viral food trends, TikTok recipes, and restaurant menu staples.`
+          },
+          {
+            title: "CULINARY HERITAGE & ORIGIN",
+            icon: "fa-earth-americas",
+            metricLabel: "HISTORICAL DEPTH & HERITAGE",
+            v1: 80 + (scoreTeam(t1.deck, 'heritage') % 20),
+            v2: 80 + (scoreTeam(t2.deck, 'heritage') % 20),
+            suffix: " PTS",
+            exp1: `Centuries of culinary perfection and generational authentic recipes.`,
+            exp2: `Iconic regional staples celebrated across global food capitals.`
+          },
+          {
+            title: "BUFFET SPREAD & VERSATILITY",
+            icon: "fa-bowl-food",
+            metricLabel: "MEAL COMPATIBILITY RATING",
+            v1: 70 + (scoreTeam(t1.deck, 'versatility') % 28),
+            v2: 70 + (scoreTeam(t2.deck, 'versatility') % 28),
+            suffix: "% SYNERGY",
+            exp1: `${t1.name}'s menu balances appetizers, heavy gravies, and sweet pairings.`,
+            exp2: `${t2.name}'s items complement each other seamlessly for an epic feast.`
+          },
+          {
+            title: "ALL-TIME DELICACY LEGACY",
+            icon: "fa-award",
+            metricLabel: "TIMELESS DELICACY SCORE",
+            v1: 85 + (scoreTeam(t1.deck, 'legacy') % 15),
+            v2: 85 + (scoreTeam(t2.deck, 'legacy') % 15),
+            suffix: " / 100",
+            exp1: `Unbeatable comfort food that fans never get tired of eating repeatedly.`,
+            exp2: `Enduring global fame that transcends cultural borders and generations.`
+          }
+        ],
+        cars: [
+          {
+            title: "TOP SPEED & TRACK ACCELERATION",
+            icon: "fa-gauge-high",
+            metricLabel: "PEAK TRACK SPEED",
+            v1: 310 + (scoreTeam(t1.deck, 'speed') % 130),
+            v2: 310 + (scoreTeam(t2.deck, 'speed') % 130),
+            suffix: " KM/H",
+            exp1: `${t1.name} loaded up high-revving track monsters with blistering 0-100 times.`,
+            exp2: `${t2.name}'s lineup features aerodynamically sculpted hypercars and twin-turbo thrust.`
+          },
+          {
+            title: "HORSEPOWER & RAW PERFORMANCE",
+            icon: "fa-bolt",
+            metricLabel: "TOTAL FLEET HORSEPOWER",
+            v1: 5200 + (scoreTeam(t1.deck, 'hp') % 4200),
+            v2: 5200 + (scoreTeam(t2.deck, 'hp') % 4200),
+            suffix: " HP",
+            exp1: `V8, V10 and twin-turbo hybrid engines delivering unrelenting asphalt power.`,
+            exp2: `Enormous torque and lightweight carbon-fiber chassis dominating drag strips.`
+          },
+          {
+            title: "ENGINEERING EXCELLENCE & LUXURY",
+            icon: "fa-gem",
+            metricLabel: "CRAFTSMANSHIP & BUILD GRADE",
+            v1: 82 + (scoreTeam(t1.deck, 'craft') % 18),
+            v2: 82 + (scoreTeam(t2.deck, 'craft') % 18),
+            suffix: " / 100",
+            exp1: `Bespoke handcrafted interiors, starlight headliners, and prestige road presence.`,
+            exp2: `Precision German and Italian automotive aerodynamics and suspension tuning.`
+          },
+          {
+            title: "STREET HEAD-TURNER FACTOR",
+            icon: "fa-eye",
+            metricLabel: "EXOTIC AURA & EXCLUSIVITY",
+            v1: 75 + (scoreTeam(t1.deck, 'aura') % 24),
+            v2: 75 + (scoreTeam(t2.deck, 'aura') % 24),
+            suffix: " PTS",
+            exp1: `${t1.name}'s garage commands instant paparazzi cameras and highway stares.`,
+            exp2: `${t2.name}'s sleek silhouettes and roar make them the ultimate dream cars.`
+          },
+          {
+            title: "MOTORSPORT HERITAGE & LEGACY",
+            icon: "fa-flag-checkered",
+            metricLabel: "RACING PEDIGREE INDEX",
+            v1: 80 + (scoreTeam(t1.deck, 'racing') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'racing') % 19),
+            suffix: "% TIMELESS",
+            exp1: `Decades of Le Mans, Nürburgring, and Grand Prix championship pedigree.`,
+            exp2: `Immortal collector icons that appreciate in auction value year after year.`
+          }
+        ],
+        cricketers: [
+          {
+            title: "MATCH-WINNING RUNS & WICKETS",
+            icon: "fa-baseball-bat-ball",
+            metricLabel: "CAREER RUNS & WICKETS TALLY",
+            v1: 18000 + (scoreTeam(t1.deck, 'stats') % 24000),
+            v2: 18000 + (scoreTeam(t2.deck, 'stats') % 24000),
+            suffix: " RUNS / WKTS",
+            exp1: `${t1.name} drafted run machines and clutch strike bowlers with insane tallies.`,
+            exp2: `${t2.name} holds monstrous career aggregates in Tests, ODIs, and T20 showdowns.`
+          },
+          {
+            title: "PRESSURE CLUTCH FACTOR (ICC FINALS)",
+            icon: "fa-trophy",
+            metricLabel: "WORLD TOURNAMENT IMPACT",
+            v1: 80 + (scoreTeam(t1.deck, 'clutch') % 20),
+            v2: 80 + (scoreTeam(t2.deck, 'clutch') % 20),
+            suffix: " PTS",
+            exp1: `Unshakable nerve in World Cup chases and tournament-deciding overs.`,
+            exp2: `Big-match temperament turning lost causes into historic fairytale victories.`
+          },
+          {
+            title: "BAT & BALL VERSATILITY (BALANCE)",
+            icon: "fa-shield-halved",
+            metricLabel: "SQUAD BALANCE & DEPTH",
+            v1: 76 + (scoreTeam(t1.deck, 'balance') % 22),
+            v2: 76 + (scoreTeam(t2.deck, 'balance') % 22),
+            suffix: " / 100",
+            exp1: `Seamless combination of opening anchors, explosive finishers, and lethal pacers.`,
+            exp2: `Deep bowling variations, razor-sharp slip fielding, and game-changing all-rounders.`
+          },
+          {
+            title: "GLOBAL CRICKET FAN REVERENCE",
+            icon: "fa-users",
+            metricLabel: "STADIUM ROAR & FOLLOWING",
+            v1: 120 + (scoreTeam(t1.deck, 'fame') % 180),
+            v2: 120 + (scoreTeam(t2.deck, 'fame') % 180),
+            suffix: "M FANS",
+            exp1: `God-tier chants echoing across Wankhede, MCG, Lord's, and Eden Gardens.`,
+            exp2: `Massive international fan bases celebrating every boundary and yorker.`
+          },
+          {
+            title: "CRICKETING HALL OF FAME LEGACY",
+            icon: "fa-monument",
+            metricLabel: "TIMELESS ICON INDEX",
+            v1: 84 + (scoreTeam(t1.deck, 'legacy') % 16),
+            v2: 84 + (scoreTeam(t2.deck, 'legacy') % 16),
+            suffix: "% LEGACY",
+            exp1: `Legends whose records defined whole eras of cricket history.`,
+            exp2: `Immortal icons celebrated by commentators and future generations alike.`
+          }
+        ],
+        songs: [
+          {
+            title: "GLOBAL SPOTIFY & YOUTUBE STREAMS",
+            icon: "fa-headphones",
+            metricLabel: "COMBINED ALL-TIME STREAMS",
+            v1: 8 + (scoreTeam(t1.deck, 'streams') % 16),
+            v2: 8 + (scoreTeam(t2.deck, 'streams') % 16),
+            suffix: " BILLION",
+            exp1: `${t1.name} drafted chart-topping multi-billion stream anthems that broke records.`,
+            exp2: `${t2.name}'s tracks dominate global charts, radio rotations, and TikTok reels.`
+          },
+          {
+            title: "CATCHINESS & REPLAY VALUE",
+            icon: "fa-repeat",
+            metricLabel: "HOOK & EARWORM RATING",
+            v1: 82 + (scoreTeam(t1.deck, 'replay') % 18),
+            v2: 82 + (scoreTeam(t2.deck, 'replay') % 18),
+            suffix: " / 100",
+            exp1: `Instantly recognizable melodies and hooks stuck in everyone's head on repeat.`,
+            exp2: `Unstoppable beat drops, catchy choruses, and infectious production value.`
+          },
+          {
+            title: "BILLBOARD CHARTS & GRAMMY AWARDS",
+            icon: "fa-trophy",
+            metricLabel: "NUMBER ONE SINGLES & AWARDS",
+            v1: 15 + (scoreTeam(t1.deck, 'charts') % 35),
+            v2: 15 + (scoreTeam(t2.deck, 'charts') % 35),
+            suffix: " #1 HITS & GRAMMYS",
+            exp1: `Record-shattering weeks at Billboard #1 and multiple Grammy wins.`,
+            exp2: `Certified multi-platinum and diamond plaque commercial domination.`
+          },
+          {
+            title: "CONCERT CROWD SING-ALONG ENERGY",
+            icon: "fa-microphone-lines",
+            metricLabel: "STADIUM CHORUS DECIBELS",
+            v1: 78 + (scoreTeam(t1.deck, 'stadium') % 21),
+            v2: 78 + (scoreTeam(t2.deck, 'stadium') % 21),
+            suffix: " PTS",
+            exp1: `Electrifying arena choruses where 80,000 fans scream every word in unison.`,
+            exp2: `Festival headliner hype tracks that make entire stadiums jump.`
+          },
+          {
+            title: "TIMELESS CULTURAL IMPACT",
+            icon: "fa-record-vinyl",
+            metricLabel: "TIMELESS CLASSIC STATUS",
+            v1: 80 + (scoreTeam(t1.deck, 'classic') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'classic') % 19),
+            suffix: "% TIMELESS",
+            exp1: `Generational anthems that will be played at parties and weddings decades from now.`,
+            exp2: `Genre-defining masterclasses that transformed the pop and hip-hop landscape.`
+          }
+        ],
+        movies: [
+          {
+            title: "WORLDWIDE BOX OFFICE COLLECTION",
+            icon: "fa-ticket",
+            metricLabel: "GLOBAL THEATRICAL GROSS",
+            v1: 4 + (scoreTeam(t1.deck, 'boxoffice') % 9),
+            v2: 4 + (scoreTeam(t2.deck, 'boxoffice') % 9),
+            suffix: " BILLION $",
+            exp1: `${t1.name} selected history-making blockbusters that shattered box office milestones.`,
+            exp2: `${t2.name}'s lineup drew packed cinema halls and massive worldwide ticket sales.`
+          },
+          {
+            title: "IMDb RATINGS & CRITICAL HONORS",
+            icon: "fa-star",
+            metricLabel: "AVERAGE RATING SCORE",
+            v1: 82 + (scoreTeam(t1.deck, 'imdb') % 16),
+            v2: 82 + (scoreTeam(t2.deck, 'imdb') % 16),
+            suffix: " / 100",
+            exp1: `Oscar-winning masterpieces with near-perfect critical consensus.`,
+            exp2: `Revered by movie critics and ranked among IMDb's Top 250 all-time titles.`
+          },
+          {
+            title: "ICONIC SCENES & POP CULTURE QUOTES",
+            icon: "fa-film",
+            metricLabel: "MEMORABLE QUOTE INDEX",
+            v1: 75 + (scoreTeam(t1.deck, 'scenes') % 24),
+            v2: 75 + (scoreTeam(t2.deck, 'scenes') % 24),
+            suffix: " PTS",
+            exp1: `Legendary dialogue and cinematic climaxes permanently etched in pop culture.`,
+            exp2: `Cinematic sequences and cliffhangers that inspired thousands of viral parodies.`
+          },
+          {
+            title: "VISUAL SPECTACLE & RE-WATCH VALUE",
+            icon: "fa-clapperboard",
+            metricLabel: "CINEMATIC ENTERTAINMENT VALUE",
+            v1: 80 + (scoreTeam(t1.deck, 'spectacle') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'spectacle') % 19),
+            suffix: "% REWATCH",
+            exp1: `Mind-bending CGI, breathtaking practical effects, and emotional rollercoasters.`,
+            exp2: `Masterful pacing and plot twists that keep you hooked every single time.`
+          },
+          {
+            title: "ENDURING CINEMA LEGACY",
+            icon: "fa-award",
+            metricLabel: "HOLLYWOOD LEGACY SCORE",
+            v1: 85 + (scoreTeam(t1.deck, 'legacy') % 15),
+            v2: 85 + (scoreTeam(t2.deck, 'legacy') % 15),
+            suffix: " / 100",
+            exp1: `Timeless films preserved in film registries and studied by directors worldwide.`,
+            exp2: `Pioneered new genres and set benchmarks for the next century of cinema.`
+          }
+        ],
+        companies: [
+          {
+            title: "MARKET CAP & GLOBAL VALUATION",
+            icon: "fa-chart-line",
+            metricLabel: "COMBINED MARKET CAPITALIZATION",
+            v1: 2 + (scoreTeam(t1.deck, 'mcap') % 7),
+            v2: 2 + (scoreTeam(t2.deck, 'mcap') % 7),
+            suffix: " TRILLION $",
+            exp1: `${t1.name} drafted financial behemoths controlling trillion-dollar valuations.`,
+            exp2: `${t2.name} commands dominant market caps and colossal balance sheets.`
+          },
+          {
+            title: "DAILY GLOBAL USERS & CUSTOMERS",
+            icon: "fa-users",
+            metricLabel: "DAILY ACTIVE CONSUMERS",
+            v1: 1 + (scoreTeam(t1.deck, 'users') % 3),
+            v2: 1 + (scoreTeam(t2.deck, 'users') % 3),
+            suffix: " BILLION PEOPLE",
+            exp1: `Products, gadgets, and software used by billions from morning to night.`,
+            exp2: `Unstoppable daily footfall, subscriptions, and essential service dependencies.`
+          },
+          {
+            title: "INNOVATION & TECH BREAKTHROUGHS",
+            icon: "fa-microchip",
+            metricLabel: "PATENTS & R&D POWER",
+            v1: 80 + (scoreTeam(t1.deck, 'tech') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'tech') % 19),
+            suffix: " PTS",
+            exp1: `Pioneers in artificial intelligence, silicon chips, electric power, and space.`,
+            exp2: `Massive R&D war chests fueling the next generational inventions.`
+          },
+          {
+            title: "BRAND TRUST & GLOBAL RECOGNITION",
+            icon: "fa-globe",
+            metricLabel: "BRAND VALUE & TRUST INDEX",
+            v1: 84 + (scoreTeam(t1.deck, 'brand') % 16),
+            v2: 84 + (scoreTeam(t2.deck, 'brand') % 16),
+            suffix: " / 100",
+            exp1: `World's most recognized logos trusted across every continent.`,
+            exp2: `Deep brand loyalty, beloved flagships, and premier quality standards.`
+          },
+          {
+            title: "ECONOMIC RESILIENCE & LONGEVITY",
+            icon: "fa-building-columns",
+            metricLabel: "MONOPOLY & FORTRESS SCORE",
+            v1: 78 + (scoreTeam(t1.deck, 'moat') % 22),
+            v2: 78 + (scoreTeam(t2.deck, 'moat') % 22),
+            suffix: "% RESILIENCE",
+            exp1: `Companies built like impenetrable fortresses that weather every economic storm.`,
+            exp2: `Essential corporate empires driving the future of the world economy.`
+          }
+        ],
+        countries_cities: [
+          {
+            title: "GLOBAL TOURISM & ANNUAL VISITORS",
+            icon: "fa-plane-departure",
+            metricLabel: "ANNUAL TOURIST ARRIVALS",
+            v1: 60 + (scoreTeam(t1.deck, 'tourists') % 120),
+            v2: 60 + (scoreTeam(t2.deck, 'tourists') % 120),
+            suffix: "M VISITORS / YR",
+            exp1: `${t1.name} selected bucket-list destinations that welcome millions of travelers.`,
+            exp2: `${t2.name}'s hotspots attract global jet-setters, backpackers, and luxury tourists.`
+          },
+          {
+            title: "WONDERS & ARCHITECTURAL LANDMARKS",
+            icon: "fa-monument",
+            metricLabel: "ICONIC MONUMENTS & HERITAGE SITES",
+            v1: 25 + (scoreTeam(t1.deck, 'landmarks') % 45),
+            v2: 25 + (scoreTeam(t2.deck, 'landmarks') % 45),
+            suffix: " UNESCO WONDERS",
+            exp1: `Home to world wonders, ancient palaces, and breathtaking skylines.`,
+            exp2: `Rich architectural treasures that define human civilization.`
+          },
+          {
+            title: "FOOD, NIGHTLIFE & VIBRANT CULTURE",
+            icon: "fa-champagne-glasses",
+            metricLabel: "LIFESTYLE & ENERGY SCORE",
+            v1: 82 + (scoreTeam(t1.deck, 'energy') % 18),
+            v2: 82 + (scoreTeam(t2.deck, 'energy') % 18),
+            suffix: " / 100",
+            exp1: `World-class culinary capitals, bustling night markets, and electric nightlife.`,
+            exp2: `Unrivaled cultural festivals, fashion districts, and vibrant street life.`
+          },
+          {
+            title: "ECONOMIC POWER & GLOBAL INFLUENCE",
+            icon: "fa-earth-americas",
+            metricLabel: "GLOBAL GEOPOLITICAL & GDP WEIGHT",
+            v1: 80 + (scoreTeam(t1.deck, 'power') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'power') % 19),
+            suffix: " PTS",
+            exp1: `Powerhouse economies and financial capitals shaping international trade.`,
+            exp2: `Influential global hubs steering world politics, technology, and arts.`
+          },
+          {
+            title: "NATURAL BEAUTY & TIMELESS APPEAL",
+            icon: "fa-mountain-sun",
+            metricLabel: "SCENIC & TIMELESS GRANDEUR",
+            v1: 84 + (scoreTeam(t1.deck, 'scenery') % 16),
+            v2: 84 + (scoreTeam(t2.deck, 'scenery') % 16),
+            suffix: "% TIMELESS",
+            exp1: `Postcard-perfect coastlines, soaring mountain ranges, and rich history.`,
+            exp2: `Dream travel getaways that enchant visitors from all over the planet.`
+          }
+        ],
+        influential_people: [
+          {
+            title: "HISTORICAL IMPACT ON HUMANITY",
+            icon: "fa-landmark",
+            metricLabel: "CIVILIZATION SHIFT INDEX",
+            v1: 85 + (scoreTeam(t1.deck, 'impact') % 15),
+            v2: 85 + (scoreTeam(t2.deck, 'impact') % 15),
+            suffix: " / 100",
+            exp1: `${t1.name} selected icons who revolutionized science, nations, and human thought.`,
+            exp2: `${t2.name}'s figures permanently altered political borders, literature, and society.`
+          },
+          {
+            title: "GLOBAL FAME & POPULAR DEVOTION",
+            icon: "fa-users",
+            metricLabel: "ESTIMATED LIFETIME REACH",
+            v1: 400 + (scoreTeam(t1.deck, 'fame') % 800),
+            v2: 400 + (scoreTeam(t2.deck, 'fame') % 800),
+            suffix: "M FOLLOWERS",
+            exp1: `Unprecedented adulation and worship across every continent.`,
+            exp2: `Household names recognized by almost every human on earth.`
+          },
+          {
+            title: "LEADERSHIP COURAGE & BREAKTHROUGHS",
+            icon: "fa-shield-halved",
+            metricLabel: "COURAGE & GENIUS RATING",
+            v1: 80 + (scoreTeam(t1.deck, 'genius') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'genius') % 19),
+            suffix: " PTS",
+            exp1: `Fearless battlefield and intellectual brilliance against impossible odds.`,
+            exp2: `Groundbreaking discoveries and revolutionary speeches that inspired millions.`
+          },
+          {
+            title: "AWARDS, MONUMENTS & HONORS",
+            icon: "fa-monument",
+            metricLabel: "GLOBAL TRIBUTES & STATUES",
+            v1: 200 + (scoreTeam(t1.deck, 'monuments') % 400),
+            v2: 200 + (scoreTeam(t2.deck, 'monuments') % 400),
+            suffix: " MEMORIALS",
+            exp1: `Statues, national holidays, and Nobel recognitions immortalizing their deeds.`,
+            exp2: `Countless biographies, universities, and landmarks named in their honor.`
+          },
+          {
+            title: "TIMELESS HISTORICAL LEGACY",
+            icon: "fa-crown",
+            metricLabel: "ETERNAL REPUTATION SCORE",
+            v1: 88 + (scoreTeam(t1.deck, 'eternal') % 12),
+            v2: 88 + (scoreTeam(t2.deck, 'eternal') % 12),
+            suffix: "% TIMELESS",
+            exp1: `Names that will be taught in history books for thousands of years.`,
+            exp2: `Legends whose principles continue to shape modern laws and cultures.`
+          }
+        ],
+        actresses: [
+          {
+            title: "GLOBAL STARDOM & SOCIAL MEDIA REVERENCE",
+            icon: "fa-gem",
+            metricLabel: "TOTAL SOCIAL ADMIRATION",
+            v1: 250 + (scoreTeam(t1.deck, 'fame') % 400),
+            v2: 250 + (scoreTeam(t2.deck, 'fame') % 400),
+            suffix: "M FANS",
+            exp1: `${t1.name} drafted Hollywood royalty commanding massive global digital reach.`,
+            exp2: `${t2.name} commands viral fashion headlines and millions of devoted admirers.`
+          },
+          {
+            title: "BOX OFFICE POWER & STREAMING HITS",
+            icon: "fa-ticket",
+            metricLabel: "WORLDWIDE REVENUE INFLUENCE",
+            v1: 4 + (scoreTeam(t1.deck, 'boxoffice') % 7),
+            v2: 4 + (scoreTeam(t2.deck, 'boxoffice') % 7),
+            suffix: " BILLION $",
+            exp1: `Leading roles in cinema's biggest superhero, fantasy, and drama franchises.`,
+            exp2: `Proven track record of turning independent and blockbuster releases into hits.`
+          },
+          {
+            title: "OSCARS, EMMYS & CRITICAL ACCLAIM",
+            icon: "fa-award",
+            metricLabel: "MAJOR ACCOLADES & NOMINATIONS",
+            v1: 18 + (scoreTeam(t1.deck, 'awards') % 35),
+            v2: 18 + (scoreTeam(t2.deck, 'awards') % 35),
+            suffix: " AWARDS",
+            exp1: `Prestigious Academy Awards, BAFTA, Golden Globes, and Cannes honors.`,
+            exp2: `Rave critical reviews and standing ovations at premier international festivals.`
+          },
+          {
+            title: "FASHION ICON & RED CARPET GLAMOUR",
+            icon: "fa-crown",
+            metricLabel: "RED CARPET IMPACT RATING",
+            v1: 82 + (scoreTeam(t1.deck, 'glamour') % 18),
+            v2: 82 + (scoreTeam(t2.deck, 'glamour') % 18),
+            suffix: " / 100",
+            exp1: `Iconic Met Gala moments, luxury ambassador contracts, and magazine covers.`,
+            exp2: `Trendsetting style that dictates international fashion and beauty culture.`
+          },
+          {
+            title: "TIMELESS SCREEN PRESENCE",
+            icon: "fa-star",
+            metricLabel: "HOLLYWOOD LEGACY SCORE",
+            v1: 80 + (scoreTeam(t1.deck, 'legacy') % 19),
+            v2: 80 + (scoreTeam(t2.deck, 'legacy') % 19),
+            suffix: "% TIMELESS",
+            exp1: `Unforgettable screen performances that define generations of cinema.`,
+            exp2: `Enduring audience affection that guarantees legendary status.`
+          }
+        ],
+        actors: [
+          {
+            title: "GLOBAL BOX OFFICE PULL & STAR POWER",
+            icon: "fa-masks-theater",
+            metricLabel: "LIFETIME WORLDWIDE BOX OFFICE",
+            v1: 5 + (scoreTeam(t1.deck, 'pull') % 9),
+            v2: 5 + (scoreTeam(t2.deck, 'pull') % 9),
+            suffix: " BILLION $",
+            exp1: `${t1.name} selected bankable superstars who guarantee packed theater auditoriums.`,
+            exp2: `${t2.name}'s leading men hold immense multi-billion commercial power worldwide.`
+          },
+          {
+            title: "OSCARS & PRESTIGIOUS HONORS",
+            icon: "fa-award",
+            metricLabel: "ACADEMY & FESTIVAL WINS",
+            v1: 22 + (scoreTeam(t1.deck, 'honors') % 45),
+            v2: 22 + (scoreTeam(t2.deck, 'honors') % 45),
+            suffix: " HONORS",
+            exp1: `Recognized with Oscars, Golden Globes, and Lifetime Achievement awards.`,
+            exp2: `Critical masterclasses celebrated by peers and the Academy alike.`
+          },
+          {
+            title: "ICONIC CHARACTER ROLES & CHARISMA",
+            icon: "fa-fire",
+            metricLabel: "ROLE ICONICITY SCORE",
+            v1: 82 + (scoreTeam(t1.deck, 'roles') % 18),
+            v2: 82 + (scoreTeam(t2.deck, 'roles') % 18),
+            suffix: " / 100",
+            exp1: `Defined pop culture icons (Iron Man, Batman, Jack Sparrow, Terminator, Wick).`,
+            exp2: `Unrivaled screen presence, intense dedication, and magnetic charm.`
+          },
+          {
+            title: "ACTION, DRAMA & GENRE VERSATILITY",
+            icon: "fa-layer-group",
+            metricLabel: "RANGE & LINEUP BALANCE",
+            v1: 76 + (scoreTeam(t1.deck, 'range') % 22),
+            v2: 76 + (scoreTeam(t2.deck, 'range') % 22),
+            suffix: "% RANGE",
+            exp1: `Effortless range moving between intense drama, martial arts, and blockbuster comedy.`,
+            exp2: `Diverse roster covering gritty thrillers, superhero sagas, and prestige cinema.`
+          },
+          {
+            title: "CINEMATIC IMMORTALITY & LEGACY",
+            icon: "fa-monument",
+            metricLabel: "TIMELESS ICON INDEX",
+            v1: 85 + (scoreTeam(t1.deck, 'immortal') % 15),
+            v2: 85 + (scoreTeam(t2.deck, 'immortal') % 15),
+            suffix: " / 100",
+            exp1: `Timeless legends whose classic movies will be cherished for centuries.`,
+            exp2: `Enduring icons who inspired entire generations of aspiring filmmakers.`
+          }
+        ]
+      };
+
+      const selectedCategoryKey = GAME_STATE.categoryKey;
+      const roundsConfig = (CATEGORY_ROUNDS[selectedCategoryKey] || CATEGORY_ROUNDS['actors']).map(rnd => ({
+        title: rnd.title,
+        icon: rnd.icon,
+        metricLabel: rnd.metricLabel,
+        val1: rnd.v1,
+        val2: rnd.v2,
+        suffix: rnd.suffix,
+        exp1: rnd.exp1,
+        exp2: rnd.exp2
+      }));
+
+      // Guarantee decisive outcome
+      roundsConfig.forEach((rnd, i) => {
+        if (rnd.val1 === rnd.val2) {
+          rnd.val1 += (i % 2 === 0 ? 5 : -5);
+        }
+      });
+
+      let currentRoundIdx = 0;
+      let scoreT1 = 0;
+      let scoreT2 = 0;
+      const roundWinnersHistory = [];
+
+      function runSingleRoundShowdown() {
+        if (currentRoundIdx >= 5) {
+          showGrandVictoryPresentation(scoreT1, scoreT2, roundWinnersHistory);
+          return;
+        }
+
+        const round = roundsConfig[currentRoundIdx];
+        const roundNum = currentRoundIdx + 1;
+        const winnerTeam = round.val1 > round.val2 ? 1 : 2;
+
+        if (winnerTeam === 1) scoreT1++;
+        else scoreT2++;
+
+        roundWinnersHistory.push({
+          title: round.title,
+          winnerTeam,
+          reason: winnerTeam === 1 ? round.exp1 : round.exp2
+        });
+
+        // Reset Box Visuals
+        DOM.boxBlueDuel.classList.remove('winner-gold-border');
+        DOM.boxRedDuel.classList.remove('winner-gold-border');
+        DOM.duelBlueWinnerCrown.classList.add('hidden');
+        DOM.duelRedWinnerCrown.classList.add('hidden');
+
+        // Update Round Banner
+        if (DOM.boutRoundIndexTag) DOM.boutRoundIndexTag.innerText = `ROUND ${roundNum} OF 5`;
+        if (DOM.boutRoundTitle) DOM.boutRoundTitle.innerText = round.title;
+        if (DOM.roundMetricIconPill) DOM.roundMetricIconPill.innerHTML = `<i class="fa-solid ${round.icon}"></i>`;
+        if (DOM.duelBlueIcon) DOM.duelBlueIcon.innerHTML = `<i class="fa-solid ${round.icon}"></i>`;
+        if (DOM.duelRedIcon) DOM.duelRedIcon.innerHTML = `<i class="fa-solid ${round.icon}"></i>`;
+
+        if (DOM.duelBlueMetricLabel) DOM.duelBlueMetricLabel.innerText = round.metricLabel;
+        if (DOM.duelRedMetricLabel) DOM.duelRedMetricLabel.innerText = round.metricLabel;
+        if (DOM.duelBlueExplanation) DOM.duelBlueExplanation.innerText = round.exp1;
+        if (DOM.duelRedExplanation) DOM.duelRedExplanation.innerText = round.exp2;
+
+        if (DOM.duelLiveStatusText) DOM.duelLiveStatusText.innerText = `Tallying ${round.title}...`;
+
+        // Animated count-up simulation (0 to target)
+        let countStep = 0;
+        const totalSteps = 24;
+        const countInterval = setInterval(() => {
+          countStep++;
+          const progress = countStep / totalSteps;
+          const currVal1 = Math.round(round.val1 * progress);
+          const currVal2 = Math.round(round.val2 * progress);
+
+          if (DOM.duelBlueMetricValue) DOM.duelBlueMetricValue.innerText = `${currVal1}${round.suffix}`;
+          if (DOM.duelRedMetricValue) DOM.duelRedMetricValue.innerText = `${currVal2}${round.suffix}`;
+
+          if (countStep >= totalSteps) {
+            clearInterval(countInterval);
+          }
+        }, 60);
+
+        // Progress bar smooth 6-second drain/fill
+        if (DOM.roundProgressBar) {
+          DOM.roundProgressBar.style.transition = 'none';
+          DOM.roundProgressBar.style.width = '0%';
+          setTimeout(() => {
+            DOM.roundProgressBar.style.transition = 'width 6.2s linear';
+            DOM.roundProgressBar.style.width = '100%';
+          }, 50);
+        }
+
+        // HALF-WAY THRILL DELAY (At ~3.2s): REVEAL WINNER WITH GOLDEN BORDER & TING-TING CHIME!
+        setTimeout(() => {
+          audio.playTingTing();
+
+          if (winnerTeam === 1) {
+            DOM.boxBlueDuel.classList.add('winner-gold-border');
+            DOM.duelBlueWinnerCrown.classList.remove('hidden');
+            if (DOM.duelLiveStatusText) {
+              DOM.duelLiveStatusText.innerHTML = `👑 <strong class="text-sky-400 font-bold">${t1.name}</strong> claims Round ${roundNum}!`;
+            }
+          } else {
+            DOM.boxRedDuel.classList.add('winner-gold-border');
+            DOM.duelRedWinnerCrown.classList.remove('hidden');
+            if (DOM.duelLiveStatusText) {
+              DOM.duelLiveStatusText.innerHTML = `👑 <strong class="text-rose-400 font-bold">${t2.name}</strong> claims Round ${roundNum}!`;
+            }
+          }
+
+          // Update Running Ticker
+          if (DOM.liveScoreTicker) {
+            DOM.liveScoreTicker.innerText = `${scoreT1} - ${scoreT2}`;
+          }
+        }, 3200);
+
+        // FULL 6.5 SECONDS SUSPENSE: PROCEED TO NEXT ROUND
+        setTimeout(() => {
+          currentRoundIdx++;
+          runSingleRoundShowdown();
+        }, 6500);
+      }
+
+      runSingleRoundShowdown();
+    }
+
+    function showGrandVictoryPresentation(scoreT1, scoreT2, roundHistory) {
+      if (DOM.liveBoutArenaBox) DOM.liveBoutArenaBox.classList.add('hidden');
+      if (DOM.grandRevealBox) {
+        DOM.grandRevealBox.classList.remove('hidden');
+        DOM.grandRevealBox.classList.add('flex');
+      }
+
+      const t1 = GAME_STATE.team1;
+      const t2 = GAME_STATE.team2;
+      const t1Won = scoreT1 > scoreT2;
+      const winner = t1Won ? t1 : t2;
+      const finalScoreStr = t1Won ? `${scoreT1} - ${scoreT2}` : `${scoreT2} - ${scoreT1}`;
+
+      if (DOM.winnerNameText) DOM.winnerNameText.innerText = winner.name.toUpperCase();
+      if (DOM.finalScorePill) DOM.finalScorePill.innerText = finalScoreStr;
+      if (DOM.winnerSummaryShort) {
+        DOM.winnerSummaryShort.innerText = `${winner.name} conquered ${t1Won ? scoreT1 : scoreT2} of 5 competition metrics with supreme team depth!`;
+      }
+
+      if (DOM.battleRoundsContainer) {
+        DOM.battleRoundsContainer.innerHTML = '';
+        roundHistory.forEach((rnd, idx) => {
+          const isT1 = rnd.winnerTeam === 1;
+          const winnerName = isT1 ? t1.name : t2.name;
+          const badgeClass = isT1 ? 'bg-sky-500/20 text-sky-300 border-sky-400/30' : 'bg-rose-500/20 text-rose-300 border-rose-400/30';
+
+          const itemEl = document.createElement('div');
+          itemEl.className = 'p-2.5 rounded-xl glass-panel border border-white/5 flex items-center justify-between gap-2 shadow';
+          itemEl.innerHTML = `
+            <div class="min-w-0">
+              <div class="text-xs font-outfit font-semibold text-slate-200 truncate">
+                Round ${idx + 1}: ${rnd.title}
+              </div>
+              <div class="text-[11px] text-slate-400 truncate">
+                ${rnd.reason}
+              </div>
+            </div>
+            <div class="px-2.5 py-1 rounded-lg border font-outfit text-[10px] font-bold uppercase flex-shrink-0 ${badgeClass}">
+              ${winnerName} +1
+            </div>
+          `;
+          DOM.battleRoundsContainer.appendChild(itemEl);
+        });
+      }
+
+      audio.playVictoryChime();
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
+      }
+    }
+
+    function renderCategoryDeck() {
+      if (!DOM.categoryTilesGrid) return;
+      DOM.categoryTilesGrid.innerHTML = '';
+
+      Object.values(CATEGORIES).forEach(cat => {
+        const isSelected = GAME_STATE.categoryKey === cat.id;
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = `cat-tile p-3 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition ${isSelected ? 'active' : ''}`;
+        tile.innerHTML = `
+          <div class="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center mb-1 text-slate-300 text-sm">
+            <i class="fa-solid ${cat.icon}"></i>
+          </div>
+          <div class="font-outfit font-semibold text-[11px] text-slate-200 truncate w-full">${cat.name}</div>
+        `;
+        tile.onclick = () => {
+          GAME_STATE.categoryKey = cat.id;
+          renderCategoryDeck();
+          audio.playTap();
+        };
+        DOM.categoryTilesGrid.appendChild(tile);
+      });
+    }
+
+    function showToast(msg, icon = '✨') {
+      if (!DOM.toastNotification || !DOM.toastMessage) return;
+      DOM.toastMessage.innerText = msg;
+      if (DOM.toastIcon) DOM.toastIcon.innerText = icon;
+      DOM.toastNotification.classList.remove('opacity-0', 'translate-y-3');
+      DOM.toastNotification.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        DOM.toastNotification.classList.remove('opacity-100', 'translate-y-0');
+        DOM.toastNotification.classList.add('opacity-0', 'translate-y-3');
+      }, 2000);
+    }
+
+    function showScreen(screenId) {
+      const screens = ['screenLobby', 'screenCoinToss', 'screenArena', 'screenJudgment'];
+      screens.forEach(s => {
+        if (DOM[s]) {
+          if (s === screenId) {
+            DOM[s].classList.remove('hidden');
+            DOM[s].classList.add('flex');
+          } else {
+            DOM[s].classList.add('hidden');
+            DOM[s].classList.remove('flex');
+          }
+        }
+      });
+    }
+
+    function initEventListeners() {
+      if (DOM.btnToggleAudio) {
+        DOM.btnToggleAudio.onclick = () => {
+          audio.muted = !audio.muted;
+          if (DOM.hudAudioIcon) {
+            DOM.hudAudioIcon.className = audio.muted ? 'fa-solid fa-volume-xmark text-slate-500' : 'fa-solid fa-volume-high text-sky-400';
+          }
+          showToast(audio.muted ? 'Sound Muted' : 'Sound Enabled');
+        };
+      }
+
+      if (DOM.btnThreeDots && DOM.threeDotMenu) {
+        DOM.btnThreeDots.onclick = (e) => {
+          e.stopPropagation();
+          audio.playTap();
+          DOM.threeDotMenu.classList.toggle('hidden');
+        };
+        document.addEventListener('click', (e) => {
+          if (!DOM.threeDotMenu.contains(e.target) && e.target !== DOM.btnThreeDots) {
+            DOM.threeDotMenu.classList.add('hidden');
+          }
+        });
+      }
+
+      if (DOM.menuBtnRules && DOM.modalRules) {
+        DOM.menuBtnRules.onclick = () => {
+          audio.playTap();
+          DOM.modalRules.classList.remove('hidden');
+          DOM.threeDotMenu.classList.add('hidden');
+        };
+      }
+      if (DOM.btnCloseRules && DOM.modalRules) {
+        DOM.btnCloseRules.onclick = () => {
+          audio.playTap();
+          DOM.modalRules.classList.add('hidden');
+        };
+      }
+
+      if (DOM.menuBtnReset) {
+        DOM.menuBtnReset.onclick = () => {
+          audio.playTap();
+          DOM.threeDotMenu.classList.add('hidden');
+          if (DOM.hudCenterStatus) DOM.hudCenterStatus.classList.add('hidden');
+          document.body.classList.remove('team-blue-turn', 'team-red-turn');
+          showScreen('screenLobby');
+          renderCategoryDeck();
+          showToast('Match Reset', '✨');
+        };
+      }
+
+      if (DOM.btnTabTeam1) {
+        DOM.btnTabTeam1.onclick = () => {
+          GAME_STATE.viewingTeam = 1;
+          renderDeckSlots();
+          updateHUD();
+          audio.playTap();
+        };
+      }
+      if (DOM.btnTabTeam2) {
+        DOM.btnTabTeam2.onclick = () => {
+          GAME_STATE.viewingTeam = 2;
+          renderDeckSlots();
+          updateHUD();
+          audio.playTap();
+        };
+      }
+
+      if (DOM.btnStartGame) {
+        DOM.btnStartGame.onclick = () => {
+          audio.playTap();
+          GAME_STATE.team1.name = (DOM.team1NameInput && DOM.team1NameInput.value.trim()) || "Blue King";
+          GAME_STATE.team2.name = (DOM.team2NameInput && DOM.team2NameInput.value.trim()) || "Red King";
+          runCoinToss();
+        };
+      }
+
+      if (DOM.btnProceedToDraft) {
+        DOM.btnProceedToDraft.onclick = () => {
+          audio.playTap();
+          initializeDraftMatch();
+        };
+      }
+
+      if (DOM.btnPlayAgainSameCategory) {
+        DOM.btnPlayAgainSameCategory.onclick = () => {
+          audio.playTap();
+          runCoinToss();
+        };
+      }
+      if (DOM.btnPlayNewCategory) {
+        DOM.btnPlayNewCategory.onclick = () => {
+          audio.playTap();
+          if (DOM.hudCenterStatus) DOM.hudCenterStatus.classList.add('hidden');
+          document.body.classList.remove('team-blue-turn', 'team-red-turn');
+          showScreen('screenLobby');
+          renderCategoryDeck();
+        };
+      }
+
+      if (DOM.btnCarouselPrev) {
+        DOM.btnCarouselPrev.onclick = () => {
+          const nextIdx = Math.max(0, GAME_STATE.focusedCardIndex - 1);
+          setFocusedCardIndex(nextIdx);
+        };
+      }
+      if (DOM.btnCarouselNext) {
+        DOM.btnCarouselNext.onclick = () => {
+          const nextIdx = Math.min(2, GAME_STATE.focusedCardIndex + 1);
+          setFocusedCardIndex(nextIdx);
+        };
+      }
+
+      if (DOM.btnDraftFocusedCard) {
+        DOM.btnDraftFocusedCard.onclick = () => {
+          const activeCard = GAME_STATE.currentDraftChoices[GAME_STATE.focusedCardIndex];
+          if (activeCard) {
+            executeDraftPick(activeCard);
+          }
+        };
+      }
+    }
+
+    function initApp() {
+      initDOMElements();
+      initEventListeners();
+      renderCategoryDeck();
+      showScreen('screenLobby');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>
